@@ -2,6 +2,7 @@
 
 namespace App\Resource;
 
+use App\Model\User;
 use Hyperf\Resource\Json\JsonResource;
 
 class PostResource extends JsonResource
@@ -16,6 +17,7 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'author' => $this->author,
+            'authorMeta' => (User::query()->select('name', 'id', 'avatar')->where('id', $this->author)->get()->toArray())[0],
             'title' => $this->title,
             'content' => $this->content,
             'excerpt' => $this->excerpt,

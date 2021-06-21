@@ -24,10 +24,12 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'desc' => $this->desc,
             'username' => $this->username,
             'avatar' => $this->avatar,
             'check' => (int) $this->check ? true : false,
             'telephone' => $this->telephone,
+            'answertest' => $this->answertest,
             'ip' => $this->ip,
             'email' => $this->email,
             'created_at' => $this->created_at,

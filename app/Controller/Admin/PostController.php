@@ -19,10 +19,6 @@ use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
  * Class PostController
  * @package App\Controller\Admin
  * @Controller()
- * @Middlewares({
- *     @Middleware(JWTAuthMiddleware::class),
- *     @Middleware(PermissionMiddleware::class)
- * })
  */
 class PostController extends AbstractController
 {
@@ -37,6 +33,8 @@ class PostController extends AbstractController
         $status = $this->request->input('status', '%');
         $type = $this->request->input('type', '%');
         $author = $this->request->input('author', '%');
+        $menu = $this->request->input('menu', '%');
+        $orderBy = $this->request->input('orderBy', 'id');
         $pageSize = $this->request->query('pageSize') ?? 10;
         $pageNo = $this->request->query('pageNo') ?? 1;
 
@@ -46,8 +44,10 @@ class PostController extends AbstractController
                 ['title', 'like', $title],
                 ['status', 'like', $status],
                 ['type', 'like', $type],
-                ['author', 'like', $author]
+                ['author', 'like', $author],
+                ['menu', 'like', '"' . $menu . '"']
             ])
+            ->orderBy($orderBy, 'desc')
             ->paginate((int) $pageSize, ['*'], 'page', (int) $pageNo);
         $permissions = $permission->toArray();
 
@@ -64,6 +64,10 @@ class PostController extends AbstractController
     /**
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="create", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function create(PostRequest $request)
     {
@@ -86,6 +90,10 @@ class PostController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function update(PostRequest $request, int $id)
     {
@@ -107,6 +115,10 @@ class PostController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function edit(int $id)
     {
@@ -117,6 +129,10 @@ class PostController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function delete(int $id)
     {

@@ -39,7 +39,7 @@ class PostRequest extends FormRequest
 //            'music' => 'required',
 //            'video' => 'required',
             'views' => 'required',
-//            'header_img' => 'required',
+            'header_img' => 'required',
 //            'updated_at' => 'required',
         ];
     }
