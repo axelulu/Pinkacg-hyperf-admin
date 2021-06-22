@@ -9,6 +9,7 @@ use App\Controller\AbstractController;
 use App\Request\UploadRequest;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
+use \League\Flysystem\Filesystem;
 
 /**
  * Class UploadController
@@ -24,7 +25,7 @@ class UploadController extends AbstractController
      * @throws \League\Flysystem\FileExistsException
      * @RequestMapping(path="uploadAvatar", methods="post")
      */
-    public function uploadAvatar(UploadRequest $request, \League\Flysystem\Filesystem $filesystem)
+    public function uploadAvatar(UploadRequest $request, Filesystem $filesystem)
     {
         $file = $request->validated();
         $avatar = $file['file'];
@@ -58,7 +59,7 @@ class UploadController extends AbstractController
      * @throws \League\Flysystem\FileExistsException
      * @RequestMapping(path="uploadPostImg", methods="post")
      */
-    public function uploadPostImg(UploadRequest $request, \League\Flysystem\Filesystem $filesystem)
+    public function uploadPostImg(UploadRequest $request, Filesystem $filesystem)
     {
         $file = $request->validated();
         $postImg = $file['file'];
@@ -73,6 +74,36 @@ class UploadController extends AbstractController
         $extension = $postImg->getExtension();
         //构建图片链接
         $postImglink = 'userPost/' . $postId . '/' . md5(time() . $postImg->getClientFilename()) . '.' . $extension;
+        $filelink = 'uploads/' . $postImglink;
+        $stream = fopen($postImg->getRealPath(), 'r+');
+        $filesystem->writeStream(
+            $filelink,
+            $stream
+        );
+        fclose($stream);
+        return $this->success([
+            'link' => $postImglink,
+        ], '上传成功');
+    }
+
+    /**
+     * @param UploadRequest $request
+     * @param \League\Flysystem\Filesystem $filesystem
+     * @return array|\Psr\Http\Message\ResponseInterface
+     * @throws \League\Flysystem\FileExistsException
+     * @RequestMapping(path="uploadSiteMeta", methods="post")
+     */
+    public function uploadSiteMeta(UploadRequest $request, Filesystem $filesystem)
+    {
+        $file = $request->validated();
+        $postImg = $file['file'];
+        if (!$postImg->isValid()) {
+            return $this->fail([], '文件错误');
+        }
+        //获取扩展名
+        $extension = $postImg->getExtension();
+        //构建图片链接
+        $postImglink = 'siteMeta/' . md5(time() . $postImg->getClientFilename()) . '.' . $extension;
         $filelink = 'uploads/' . $postImglink;
         $stream = fopen($postImg->getRealPath(), 'r+');
         $filesystem->writeStream(

@@ -10,6 +10,10 @@ use App\Request\CommentRequest;
 use App\Resource\CommentResource;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
+use Hyperf\HttpServer\Annotation\Middleware;
+use Hyperf\HttpServer\Annotation\Middlewares;
+use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\PermissionMiddleware;
 
 /**
  * Class CommentController
@@ -54,6 +58,10 @@ class CommentController extends AbstractController
     /**
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="create", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function create(CommentRequest $request)
     {
@@ -70,6 +78,10 @@ class CommentController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function update(CommentRequest $request, int $id)
     {
@@ -86,16 +98,24 @@ class CommentController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function edit(int $id)
     {
-        return $this->success($id);
+        return $this->success();
     }
 
     /**
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function delete(int $id)
     {

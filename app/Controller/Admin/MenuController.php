@@ -20,10 +20,6 @@ use App\Middleware\PermissionMiddleware;
  * Class MenuController
  * @package App\Controller\Admin
  * @Controller()
- * @Middlewares({
- *     @Middleware(JWTAuthMiddleware::class),
- *     @Middleware(PermissionMiddleware::class)
- * })
  */
 class MenuController extends AbstractController
 {
@@ -65,6 +61,10 @@ class MenuController extends AbstractController
     /**
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="create", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function create(MenuRequest $request)
     {
@@ -83,6 +83,10 @@ class MenuController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function update(MenuRequest $request, int $id)
     {
@@ -100,16 +104,24 @@ class MenuController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function edit(int $id)
     {
-        return $this->success($id);
+        return $this->success();
     }
 
     /**
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function delete(int $id)
     {

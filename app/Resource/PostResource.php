@@ -17,7 +17,7 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'author' => $this->author,
-            'authorMeta' => (User::query()->select('name', 'id', 'avatar')->where('id', $this->author)->get()->toArray())[0],
+            'authorMeta' => (User::query()->select('name', 'id', 'avatar', 'credit', 'desc')->where('id', $this->author)->get()->toArray())[0],
             'title' => $this->title,
             'content' => $this->content,
             'excerpt' => $this->excerpt,

@@ -20,10 +20,6 @@ use App\Middleware\PermissionMiddleware;
  * Class PermissionController
  * @package App\Controller\Admin
  * @Controller()
- * @Middlewares({
- *     @Middleware(JWTAuthMiddleware::class),
- *     @Middleware(PermissionMiddleware::class)
- * })
  */
 class PermissionController extends AbstractController
 {
@@ -66,6 +62,10 @@ class PermissionController extends AbstractController
     /**
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="create", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function create(PermissionRequest $request)
     {
@@ -84,6 +84,10 @@ class PermissionController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function update(PermissionRequest $request, int $id)
     {
@@ -101,16 +105,24 @@ class PermissionController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function edit(int $id)
     {
-        return $this->success($id);
+        return $this->success();
     }
 
     /**
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function delete(int $id)
     {
@@ -127,12 +139,15 @@ class PermissionController extends AbstractController
     /**
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="createByRole", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function createByRole()
     {
         // 验证
         $data = $this->request->all();
-        return $data;
         $flag = (new PermissionResource(AdminPermission::query()->create($data)))->toResponse();
         if($flag){
             return $this->success();
@@ -145,12 +160,15 @@ class PermissionController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="updateByRole/{id}", methods="put")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function updateByRole(int $id)
     {
         // 验证
         $data = $this->request->all();
-        return $data;
         $data['method'] = json_encode($data['method']);
         $flag = AdminPermission::query()->where('id', $id)->update($data);
         if($flag){

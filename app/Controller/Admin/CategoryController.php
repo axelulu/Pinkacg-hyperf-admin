@@ -10,6 +10,10 @@ use App\Request\CategoryRequest;
 use App\Resource\CategoryResource;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
+use Hyperf\HttpServer\Annotation\Middleware;
+use Hyperf\HttpServer\Annotation\Middlewares;
+use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\PermissionMiddleware;
 
 /**
  * Class CategoryController
@@ -57,6 +61,10 @@ class CategoryController extends AbstractController
     /**
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="create", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function create(CategoryRequest $request)
     {
@@ -73,6 +81,10 @@ class CategoryController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function update(CategoryRequest $request, int $id)
     {
@@ -89,6 +101,10 @@ class CategoryController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function edit(int $id)
     {
@@ -106,6 +122,10 @@ class CategoryController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function delete(int $id)
     {

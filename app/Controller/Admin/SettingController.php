@@ -19,10 +19,6 @@ use App\Middleware\PermissionMiddleware;
  * Class SettingController
  * @package App\Controller\Admin
  * @Controller()
- * @Middlewares({
- *     @Middleware(JWTAuthMiddleware::class),
- *     @Middleware(PermissionMiddleware::class)
- * })
  */
 class SettingController extends AbstractController
 {
@@ -32,8 +28,9 @@ class SettingController extends AbstractController
      */
     public function index()
     {
+        $site = $this->request->input('site', '%');
         $permission = Setting::query()->where([
-            ['name', 'site_setting']
+            ['name', $site]
         ])->get();
 
         $data = [
@@ -47,6 +44,10 @@ class SettingController extends AbstractController
      * @param string $id
      * @return false|\Psr\Http\Message\ResponseInterface|string
      * @RequestMapping(path="update/{id}", methods="put")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function update(SettingRequest $request, string $id)
     {
