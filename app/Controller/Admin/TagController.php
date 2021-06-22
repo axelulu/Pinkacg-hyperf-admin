@@ -10,6 +10,10 @@ use App\Request\TagRequest;
 use App\Resource\TagResource;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Controller;
+use Hyperf\HttpServer\Annotation\Middleware;
+use Hyperf\HttpServer\Annotation\Middlewares;
+use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\PermissionMiddleware;
 
 /**
  * Class TagController
