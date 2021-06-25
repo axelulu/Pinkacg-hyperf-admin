@@ -20,10 +20,6 @@ use App\Middleware\PermissionMiddleware;
  * Class RoleController
  * @package App\Controller\Admin
  * @Controller()
- * @Middlewares({
- *     @Middleware(JWTAuthMiddleware::class),
- *     @Middleware(PermissionMiddleware::class)
- * })
  */
 class RoleController extends AbstractController
 {
@@ -61,6 +57,10 @@ class RoleController extends AbstractController
     /**
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="create", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function create(RoleRequest $request)
     {
@@ -78,6 +78,10 @@ class RoleController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function update(RoleRequest $request, int $id)
     {
@@ -101,6 +105,10 @@ class RoleController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function edit(int $id)
     {
@@ -111,13 +119,17 @@ class RoleController extends AbstractController
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function delete(int $id)
     {
+        // 判断是否存在用户角色
         if(Enforcer::getUsersForRole((string)$id)){
             return $this->fail([], '角色存在用户！');
         }
-        // 判断是否存在用户角色
         if(AdminRole::query()->where('id', $id)->delete()){
             return $this->success();
         }

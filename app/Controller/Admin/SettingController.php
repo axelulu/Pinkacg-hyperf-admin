@@ -24,13 +24,12 @@ class SettingController extends AbstractController
 {
     /**
      * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @RequestMapping(path="/admin/{id}", methods="get")
      */
-    public function index()
+    public function index(string $id)
     {
-        $site = $this->request->input('site', '%');
         $permission = Setting::query()->where([
-            ['name', $site]
+            ['name', $id]
         ])->get();
 
         $data = [
@@ -43,7 +42,7 @@ class SettingController extends AbstractController
      * @param SettingRequest $request
      * @param string $id
      * @return false|\Psr\Http\Message\ResponseInterface|string
-     * @RequestMapping(path="update/{id}", methods="put")
+     * @RequestMapping(path="/admin/{id}", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)

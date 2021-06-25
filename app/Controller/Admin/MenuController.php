@@ -8,7 +8,6 @@ use App\Controller\AbstractController;
 use App\Model\AdminPermission;
 use App\Request\MenuRequest;
 use App\Resource\MenuResource;
-use Donjan\Casbin\Enforcer;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
@@ -33,8 +32,9 @@ class MenuController extends AbstractController
         $name = $this->request->input('name', '%');
         $status = $this->request->input('status', '%');
         $p_id = $this->request->input('p_id', '%');
-        $menu = $this->request->input('menu', 1);
-        $pageSize = $this->request->query('pageSize') ?? 10;
+        $menu_slug = $this->request->input('menu_slug', '=');
+        $p_id_slug = (int) $this->request->input('p_id_slug') ? '=' : '>=';
+        $pageSize = $this->request->query('pageSize') ?? 1000;
         $pageNo = $this->request->query('pageNo') ?? 1;
 
         $permission = AdminPermission::query()
@@ -42,8 +42,8 @@ class MenuController extends AbstractController
                 ['id', 'like', $id],
                 ['name', 'like', $name],
                 ['status', 'like', $status],
-                ['p_id', '>=', $p_id],
-                ['is_menu', '=', $menu]
+                ['p_id', $p_id_slug, $p_id],
+                ['is_menu', $menu_slug, 1]
             ])
             ->paginate((int) $pageSize, ['*'], 'page', (int) $pageNo);
         $permissions = $permission->toArray();
@@ -125,10 +125,11 @@ class MenuController extends AbstractController
      */
     public function delete(int $id)
     {
-        if(Enforcer::getUsersForRole((string)$id)){
-            return $this->fail([], '角色存在用户！');
+        //存在子菜单
+        if(AdminPermission::query()->where('p_id', $id)){
+            return $this->fail([], '存在子菜单');
         }
-        // 判断是否存在用户角色
+        //有用户选择此菜单
         if(AdminPermission::query()->where('id', $id)->delete()){
             return $this->success();
         }

@@ -10,6 +10,10 @@ use App\Request\UploadRequest;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use \League\Flysystem\Filesystem;
+use Hyperf\HttpServer\Annotation\Middleware;
+use Hyperf\HttpServer\Annotation\Middlewares;
+use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\PermissionMiddleware;
 
 /**
  * Class UploadController
@@ -24,6 +28,10 @@ class UploadController extends AbstractController
      * @return array|\Psr\Http\Message\ResponseInterface
      * @throws \League\Flysystem\FileExistsException
      * @RequestMapping(path="uploadAvatar", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function uploadAvatar(UploadRequest $request, Filesystem $filesystem)
     {
@@ -58,13 +66,17 @@ class UploadController extends AbstractController
      * @return array|\Psr\Http\Message\ResponseInterface
      * @throws \League\Flysystem\FileExistsException
      * @RequestMapping(path="uploadPostImg", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function uploadPostImg(UploadRequest $request, Filesystem $filesystem)
     {
         $file = $request->validated();
         $postImg = $file['file'];
-        $postId = $file['id'];
-        if (!isset($postId)) {
+        $userId = $file['id'];
+        if (!isset($userId)) {
             return $this->fail([], '未选择文章');
         }
         if (!$postImg->isValid()) {
@@ -73,7 +85,7 @@ class UploadController extends AbstractController
         //获取扩展名
         $extension = $postImg->getExtension();
         //构建图片链接
-        $postImglink = 'userPost/' . $postId . '/' . md5(time() . $postImg->getClientFilename()) . '.' . $extension;
+        $postImglink = 'userPost/' . $userId . '/' . md5(time() . $postImg->getClientFilename()) . '.' . $extension;
         $filelink = 'uploads/' . $postImglink;
         $stream = fopen($postImg->getRealPath(), 'r+');
         $filesystem->writeStream(
@@ -92,6 +104,10 @@ class UploadController extends AbstractController
      * @return array|\Psr\Http\Message\ResponseInterface
      * @throws \League\Flysystem\FileExistsException
      * @RequestMapping(path="uploadSiteMeta", methods="post")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
      */
     public function uploadSiteMeta(UploadRequest $request, Filesystem $filesystem)
     {

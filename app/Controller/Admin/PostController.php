@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
+use App\Model\Comment;
 use App\Model\Post;
 use App\Request\PostRequest;
 use App\Resource\PostResource;
@@ -35,7 +36,7 @@ class PostController extends AbstractController
         $author = $this->request->input('author', '%');
         $menu = $this->request->input('menu', '%');
         $orderBy = $this->request->input('orderBy', 'id');
-        $pageSize = $this->request->query('pageSize') ?? 10;
+        $pageSize = $this->request->query('pageSize') ?? 1000;
         $pageNo = $this->request->query('pageNo') ?? 1;
 
         $permission = Post::query()
@@ -136,6 +137,10 @@ class PostController extends AbstractController
      */
     public function delete(int $id)
     {
+        //判断是否有评论
+        if(Comment::query()->where('post_ID', $id)->first()){
+            return $this->fail([], '文章存在评论');
+        }
         $flag = Post ::query()->where('id', $id)->delete();
         if($flag){
             return $this->success();

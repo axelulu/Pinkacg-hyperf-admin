@@ -3,11 +3,13 @@
 declare (strict_types=1);
 namespace App\Model;
 
+use Hyperf\Database\Model\SoftDeletes;
 use Hyperf\DbConnection\Model\Model;
 /**
  */
 class AdminPermission extends Model
 {
+    use SoftDeletes;
     /**
      * The table associated with the model.
      *
@@ -19,7 +21,7 @@ class AdminPermission extends Model
      *
      * @var array
      */
-    protected $fillable = ['id', 'name', 'icon', 'path', 'url', 'method', 'p_id', 'hidden', 'is_menu', 'title', 'status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $fillable = ['id', 'name', 'icon', 'path', 'url', 'method', 'p_id', 'hidden', 'is_menu', 'title', 'status', 'created_at', 'updated_at', 'deleted_at', 'sort'];
     /**
      * The attributes that should be cast to native types.
      *

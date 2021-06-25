@@ -2,11 +2,9 @@
 
 namespace App\Resource;
 
-use App\Model\Post;
 use Hyperf\Resource\Json\JsonResource;
-use App\Model\Category;
 
-class CategoryResource extends JsonResource
+class MenuChildrenResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,14 +15,17 @@ class CategoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'label' => $this->label,
-            'value' => $this->value,
-            'son' => $this->son,
+            'name' => $this->name,
+            'title' => $this->title,
             'icon' => $this->icon,
+            'path' => $this->path,
+            'url' => $this->url,
             'status' => (int) $this->status ? true : false,
+            'method' => json_decode($this->method),
+            'p_id' => (int) $this->p_id,
+            'is_menu' => (int) $this->is_menu ? true : false,
+            'sort' => (int) $this->sort,
             'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
-            'children' => CategoryChildrenResource::collection(Category::query()->where('son', $this->id)->get()),
-            'num' => Post::query()->where('menu', '"' . $this->value . '"')->count()
         ];
     }
 }

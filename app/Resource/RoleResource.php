@@ -20,7 +20,7 @@ class RoleResource extends JsonResource
             'description' => $this->description,
             'rolePermission' => $this::rolePermission($this->id),
             'status' => (int) $this->status ? true : false,
-            'updated_at' => $this->updated_at,
+            'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
         ];
     }
 

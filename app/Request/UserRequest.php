@@ -23,6 +23,7 @@ class UserRequest extends FormRequest
     {
         return [
             'avatar' => 'required|max:255',
+            'background' => 'required|max:2550',
 //            'id' => 'required',
             'check' => 'required',
 //            'created_at' => 'required',
@@ -54,6 +55,7 @@ class UserRequest extends FormRequest
             'name.required'  => '请输入昵称！',
             'desc.required'  => '请输入描述！',
             'avatar.required'  => '请输入头像！',
+            'background.required'  => '请输入背景！',
             'password.required'  => '请输入密码！',
             'telephone.required'  => '请输入电话！',
             'answertest.required'  => '请输入答题得分！',

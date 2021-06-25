@@ -6,6 +6,7 @@ namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
 use App\Model\Category;
+use App\Model\Post;
 use App\Request\CategoryRequest;
 use App\Resource\CategoryResource;
 use Hyperf\HttpServer\Annotation\Controller;
@@ -129,6 +130,15 @@ class CategoryController extends AbstractController
      */
     public function delete(int $id)
     {
+        //是否有子分类
+        if(Category::query()->where('son', $id)->first()){
+            return $this->fail([], '存在子分类');
+        }
+        //分类是否有文章
+        $category = (Category::query()->select('value')->where('id', $id)->first())['value'];
+        if(Post::query()->where('menu', '"' . $category . '"')->first()){
+            return $this->fail([], '分类存在文章');
+        }
         $flag = Category::query()->where('id', $id)->delete();
         if($flag){
             return $this->success();

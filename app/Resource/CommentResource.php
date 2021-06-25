@@ -22,7 +22,7 @@ class CommentResource extends JsonResource
             'user_id' => $this->user_id,
             'like' => $this->like,
             'status' => (int) $this->status ? true : false,
-            'updated_at' => $this->updated_at,
+            'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
         ];
     }
 }

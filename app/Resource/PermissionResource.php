@@ -2,6 +2,7 @@
 
 namespace App\Resource;
 
+use App\Model\AdminPermission;
 use Hyperf\Resource\Json\JsonResource;
 
 class PermissionResource extends JsonResource
@@ -24,7 +25,8 @@ class PermissionResource extends JsonResource
             'method' => json_decode($this->method),
             'p_id' => (int) $this->p_id,
             'is_menu' => (int) $this->is_menu ? true : false,
-            'updated_at' => $this->updated_at,
+            'sort' => (int) $this->sort,
+            'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
         ];
     }
 }

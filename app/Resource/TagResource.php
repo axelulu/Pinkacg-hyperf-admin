@@ -18,7 +18,7 @@ class TagResource extends JsonResource
             'label' => $this->label,
             'value' => $this->value,
             'status' => (int) $this->status ? true : false,
-            'updated_at' => $this->updated_at,
+            'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
         ];
     }
 }

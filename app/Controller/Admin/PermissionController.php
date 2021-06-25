@@ -34,8 +34,8 @@ class PermissionController extends AbstractController
         $status = $this->request->input('status', '%');
         $p_id = $this->request->input('p_id', '%');
         $p_id_slug = (int) $this->request->input('p_id_slug') ? '=' : '>=';
-        $menu = $this->request->input('menu', 1);
-        $pageSize = $this->request->query('pageSize') ?? 10;
+        $menu_slug = (int) $this->request->input('menu_slug') ? '=' : '<=';
+        $pageSize = $this->request->query('pageSize') ?? 1000;
         $pageNo = $this->request->query('pageNo') ?? 1;
 
         $permission = AdminPermission::query()
@@ -44,7 +44,7 @@ class PermissionController extends AbstractController
                 ['name', 'like', $name],
                 ['status', 'like', $status],
                 ['p_id', $p_id_slug, $p_id],
-                ['is_menu', '<=', $menu]
+                ['is_menu', $menu_slug, 0]
             ])
             ->paginate((int) $pageSize, ['*'], 'page', (int) $pageNo);
         $permissions = $permission->toArray();

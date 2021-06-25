@@ -3,6 +3,7 @@
 declare (strict_types=1);
 namespace App\Model;
 
+use Hyperf\Database\Model\SoftDeletes;
 use Hyperf\DbConnection\Model\Model;
 /**
  * @property int $id 
@@ -30,6 +31,7 @@ use Hyperf\DbConnection\Model\Model;
  */
 class Post extends Model
 {
+    use SoftDeletes;
     /**
      * The table associated with the model.
      *
@@ -41,7 +43,7 @@ class Post extends Model
      *
      * @var array
      */
-    protected $fillable = ['id', 'author', 'title', 'content', 'excerpt', 'type', 'status', 'comment_status', 'password', 'name', 'menu', 'tag', 'guid', 'comment_count', 'download_status', 'download', 'music', 'video', 'header_img', 'views', 'created_at', 'updated_at', 'deleted_at'];
+    protected $fillable = ['id', 'author', 'title', 'content', 'excerpt', 'type', 'status', 'comment_status', 'password', 'name', 'menu', 'tag', 'guid', 'comment_count', 'download_status', 'download', 'music', 'video', 'header_img', 'views', 'created_at', 'updated_at'];
     /**
      * The attributes that should be cast to native types.
      *

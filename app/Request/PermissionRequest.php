@@ -31,6 +31,7 @@ class PermissionRequest extends FormRequest
             'method' => 'required',
 //            'p_id' => 'required',
             'is_menu' => 'required',
+            'sort' => 'required',
         ];
     }
 
@@ -50,6 +51,7 @@ class PermissionRequest extends FormRequest
             'method.required'  => '请输入方法！',
 //            'p_id.required'  => '请输入父节点！',
             'is_menu.required'  => '请输入菜单状态！',
+            'sort.required'  => '请输入菜单排序！',
 //            'updated_at.required'  => '请输入更新时间！',
         ];
     }
