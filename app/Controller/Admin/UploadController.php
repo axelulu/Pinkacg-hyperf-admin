@@ -9,11 +9,13 @@ use App\Controller\AbstractController;
 use App\Request\UploadRequest;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
+use League\Flysystem\FileExistsException;
 use \League\Flysystem\Filesystem;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class UploadController
@@ -24,16 +26,16 @@ class UploadController extends AbstractController
 {
     /**
      * @param UploadRequest $request
-     * @param \League\Flysystem\Filesystem $filesystem
-     * @return array|\Psr\Http\Message\ResponseInterface
-     * @throws \League\Flysystem\FileExistsException
+     * @param Filesystem $filesystem
+     * @return ResponseInterface
+     * @throws FileExistsException
      * @RequestMapping(path="uploadAvatar", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function uploadAvatar(UploadRequest $request, Filesystem $filesystem)
+    public function uploadAvatar(UploadRequest $request, Filesystem $filesystem): ResponseInterface
     {
         $file = $request->validated();
         $avatar = $file['file'];
@@ -62,16 +64,16 @@ class UploadController extends AbstractController
 
     /**
      * @param UploadRequest $request
-     * @param \League\Flysystem\Filesystem $filesystem
-     * @return array|\Psr\Http\Message\ResponseInterface
-     * @throws \League\Flysystem\FileExistsException
+     * @param Filesystem $filesystem
+     * @return ResponseInterface
+     * @throws FileExistsException
      * @RequestMapping(path="uploadPostImg", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function uploadPostImg(UploadRequest $request, Filesystem $filesystem)
+    public function uploadPostImg(UploadRequest $request, Filesystem $filesystem): ResponseInterface
     {
         $file = $request->validated();
         $postImg = $file['file'];
@@ -100,16 +102,16 @@ class UploadController extends AbstractController
 
     /**
      * @param UploadRequest $request
-     * @param \League\Flysystem\Filesystem $filesystem
-     * @return array|\Psr\Http\Message\ResponseInterface
-     * @throws \League\Flysystem\FileExistsException
+     * @param Filesystem $filesystem
+     * @return ResponseInterface
+     * @throws FileExistsException
      * @RequestMapping(path="uploadSiteMeta", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function uploadSiteMeta(UploadRequest $request, Filesystem $filesystem)
+    public function uploadSiteMeta(UploadRequest $request, Filesystem $filesystem): ResponseInterface
     {
         $file = $request->validated();
         $postImg = $file['file'];

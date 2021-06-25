@@ -14,6 +14,7 @@ use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class SettingController
@@ -23,10 +24,11 @@ use App\Middleware\PermissionMiddleware;
 class SettingController extends AbstractController
 {
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param string $id
+     * @return ResponseInterface
      * @RequestMapping(path="/admin/{id}", methods="get")
      */
-    public function index(string $id)
+    public function index(string $id): ResponseInterface
     {
         $permission = Setting::query()->where([
             ['name', $id]
@@ -41,22 +43,22 @@ class SettingController extends AbstractController
     /**
      * @param SettingRequest $request
      * @param string $id
-     * @return false|\Psr\Http\Message\ResponseInterface|string
+     * @return ResponseInterface
      * @RequestMapping(path="/admin/{id}", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(SettingRequest $request, string $id)
+    public function update(SettingRequest $request, string $id): ResponseInterface
     {
         // 验证
         $data = $request->validated();
         $data['value'] = json_encode($data['value']);
         $flag = Setting::query()->where('name', $id)->update([
-            'value'=> $data['value']
+            'value' => $data['value']
         ]);
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();

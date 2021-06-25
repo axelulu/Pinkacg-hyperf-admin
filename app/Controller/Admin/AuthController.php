@@ -10,6 +10,8 @@ use Hyperf\HttpServer\Annotation\AutoController;
 use Phper666\JWTAuth\JWT;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use Psr\Http\Message\ResponseInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class AuthController
@@ -20,10 +22,10 @@ class AuthController extends AbstractController
 {
     /**
      * @param JWT $JWT
-     * @return \Psr\Http\Message\ResponseInterface
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @return ResponseInterface
+     * @throws InvalidArgumentException
      */
-    public function login(JWT $JWT)
+    public function login(JWT $JWT): ResponseInterface
     {
         $username = $this->request->input('username');
         $password = $this->request->input('password');
@@ -53,25 +55,25 @@ class AuthController extends AbstractController
             ]);
 
             $data = [
-                'token' => (string) $token,
+                'token' => (string)$token,
                 'exp' => $JWT->getTTL(),
             ];
             return $this->success($data);
         }
-        return $this->fail([],'登陆失败');
+        return $this->fail([], '登陆失败');
     }
 
     /**
      * @param JWT $JWT
-     * @return \Psr\Http\Message\ResponseInterface
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @return ResponseInterface
+     * @throws InvalidArgumentException
      * @Middleware(JWTAuthMiddleware::class)
      */
-    public function refreshToken(JWT $JWT)
+    public function refreshToken(JWT $JWT): ResponseInterface
     {
         $token = $JWT->refreshToken();
         $data = [
-            'token' => (string) $token,
+            'token' => (string)$token,
             'exp' => $JWT->getTTL(),
         ];
         return $this->success($data);
@@ -79,11 +81,11 @@ class AuthController extends AbstractController
 
     /**
      * @param JWT $JWT
-     * @return \Psr\Http\Message\ResponseInterface
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @return ResponseInterface
+     * @throws InvalidArgumentException
      * @Middleware(JWTAuthMiddleware::class)
      */
-    public function logout(JWT $JWT)
+    public function logout(JWT $JWT): ResponseInterface
     {
         if ($JWT->logout()) {
             return $this->success();
@@ -93,10 +95,10 @@ class AuthController extends AbstractController
 
     /**
      * @param JWT $JWT
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @Middleware(JWTAuthMiddleware::class)
      */
-    public function getData(JWT $JWT)
+    public function getData(JWT $JWT): ResponseInterface
     {
         $data = [
             'cache_time' => $JWT->getTokenDynamicCacheTime(), // 获取token的有效时间，动态的

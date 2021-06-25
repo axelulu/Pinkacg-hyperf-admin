@@ -2,6 +2,7 @@
 
 namespace App\Resource;
 
+use App\Model\Category;
 use App\Model\User;
 use Hyperf\Resource\Json\JsonResource;
 
@@ -25,10 +26,11 @@ class PostResource extends JsonResource
             'guid' => $this->guid,
             'comment_count' => (int) $this->comment_count,
             'status' => $this->status,
-            'comment_status' => (int) $this->comment_status ? true : false,
+            'comment_status' => (bool)((int)$this->comment_status),
             'menu' => json_decode($this->menu),
+            'menuMeta' => (Category::query()->select('label', 'value')->where('value', json_decode($this->menu))->first()->toArray()),
             'tag' => json_decode($this->tag),
-            'download_status' => (int) $this->download_status ? true : false,
+            'download_status' => (bool)((int)$this->download_status),
             'download' => json_decode($this->download),
             'music' => json_decode($this->music),
             'video' => json_decode($this->video),

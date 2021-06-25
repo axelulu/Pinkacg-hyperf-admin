@@ -6,13 +6,13 @@ namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
 use App\Model\AdminPermission;
-use App\Model\AdminRole;
 use App\Model\Comment;
 use App\Model\Post;
 use App\Model\User;
 use App\Request\UserRequest;
 use App\Resource\NavResource;
 use App\Resource\UserResource;
+use App\Services\UserService;
 use Donjan\Casbin\Enforcer;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Middleware;
@@ -21,6 +21,7 @@ use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Phper666\JWTAuth\JWT;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class UserController
@@ -30,157 +31,55 @@ use Phper666\JWTAuth\JWT;
 class UserController extends AbstractController
 {
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param UserService $userService
+     * @param JWT $JWT
+     * @return ResponseInterface
      * @RequestMapping(path="nav", methods="get")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class)
      * })
      */
-    public function nav(JWT $JWT)
+    public function nav(UserService $userService, JWT $JWT): ResponseInterface
     {
-        $user = $JWT->getParserData();
-        $role_id = Enforcer::getRolesForUser('roles_' . $user['id'])[0];
-        $permission = Enforcer::getPermissionsForUser('permission_' . $role_id);
-        $permissions = array();
-        foreach ($permission as $k => $v) {
-            //每一项权限
-            $permission_item = NavResource::make(AdminPermission::query()->where(['id'=> $v[3], 'is_menu'=> 1])->orderBy('sort', 'asc')->first());
-            $permissions[$k] = $permission_item;
-        }
-        $data = NavResource::collection(AdminPermission::query()->where(['p_id'=> 0, 'is_menu'=> 1])->orderBy('sort', 'asc')->get());
-        foreach ($data as $k => $v){
-            array_push($permissions, $data[$k]);
-        }
-        return $this->success($permissions);
+        return $this->success($userService->nav($JWT));
     }
 
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param UserService $userService
+     * @param JWT $JWT
+     * @return ResponseInterface
      * @RequestMapping(path="info", methods="get")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class)
      * })
      */
-    public function info(JWT $JWT)
+    public function info(UserService $userService, JWT $JWT): ResponseInterface
     {
-        $user = $JWT->getParserData();
-        $role_id = Enforcer::getRolesForUser('roles_' . $user['id'])[0];
-        $role_meta = AdminRole::query()->where('id', $role_id)->first();
-        $permission = Enforcer::getPermissionsForUser('permission_' . $role_id);
-        $permissions = array();
-        foreach ($permission as $k => $v) {
-            //每一项权限
-            $permission_item = AdminPermission::query()->where('id', $v[3])->first();
-            $method = $permission_item['method'];
-            $methods = [
-                [
-                    'action' => 'POST',
-                    'describe' => '新增',
-                    'defaultCheck' => false
-                ], [
-                    'action' => 'GET',
-                    'describe' => '查询',
-                    'defaultCheck' => false
-                ], [
-                    'action' => 'PUT',
-                    'describe' => '修改',
-                    'defaultCheck' => false
-                ], [
-                    'action' => 'DELETE',
-                    'describe' => '删除',
-                    'defaultCheck' => false
-                ]
-            ];
-            $permission_method = array();
-            foreach ($method as $k2 => $v2) {
-                if (in_array($methods[$k2]['action'], $method)) {
-                    array_push($permission_method, $methods[$k2]['action']);
-                }
-            }
-            //重构权限数组
-            $permission_new_item['roleId'] = $role_meta['id'];
-            $permission_new_item['permissionId'] = $permission_item['id'];
-            $permission_new_item['permissionName'] = $permission_item['name'];
-            $permission_new_item['actions'] = '[["action" => "add","defaultCheck" => false,"describe" => "新增"],["action" => "query","defaultCheck" => false,"describe" => "查询"],["action" => "get","defaultCheck" => false,"describe" => "详情"],["action" => "update","defaultCheck" => false,"describe" => "修改"],["action" => "delete","defaultCheck" => false,"describe" => "删除"]]';
-            $permission_new_item['actionEntitySet'] = $permission_method;
-            $permission_new_item['actionList'] = null;
-            $permission_new_item['dataAccess'] = null;
-            $permissions[$k] = $permission_new_item;
-        }
-        return $this->success([
-            'id' => $user['id'],
-            'name' => $user['name'],
-            'username' => $user['username'],
-            'password' => '',
-            'avatar' => $user['avatar'],
-            'status' => $user['status'],
-            'telephone' => $user['telephone'],
-            'lastLoginIp' => $user['ip'],
-            'lastLoginTime' => $user['updated_at'],
-            'creatorId' => $user['id'],
-            'createTime' => $user['created_at'],
-            'merchantCode' => 'TLif2btpzg079h15bk',
-            'deleted' => 0,
-            'roleId' => $user['username'],
-            'role' => [
-                'id' => $role_meta['id'],
-                'name' => $role_meta['name'],
-                'describe' => $role_meta['description'],
-                'status' => $role_meta['status'],
-                'creatorId' => 1,
-                'createTime' => $role_meta['created_at'],
-                'deleted' => 0,
-                'permissions' => $permissions
-            ]
-        ]);
+        //交给service处理
+        return $this->success($userService->info($JWT));
     }
 
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param UserService $userService
+     * @return ResponseInterface
      * @RequestMapping(path="index", methods="get")
      */
-    public function index()
+    public function index(UserService $userService): ResponseInterface
     {
-        $name = $this->request->input('name', '%');
-        $username = $this->request->input('username', '%');
-        $check = $this->request->input('check', '%');
-        $id = $this->request->input('id', '%');
-        $ip = $this->request->input('ip', '%');
-        $email = $this->request->input('email', '%');
-        $pageSize = $this->request->query('pageSize') ?? 10;
-        $pageNo = $this->request->query('pageNo') ?? 1;
-
-        $user = User::query()
-            ->where([
-                ['name', 'like', $name],
-                ['username', 'like', $username],
-                ['check', 'like', $check],
-                ['id', 'like', $id],
-                ['ip', 'like', $ip],
-                ['email', 'like', $email],
-            ])
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $users = $user->toArray();
-
-        $data = [
-            'pageSize' => $users['per_page'],
-            'pageNo' => $users['current_page'],
-            'totalCount' => $users['total'],
-            'totalPage' => $users['to'],
-            'data' => UserResource::collection($user),
-        ];
-        return $this->success($data);
+        //交给service处理
+        return $this->success($userService->index($this->request));
     }
 
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param UserRequest $request
+     * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(UserRequest $request)
+    public function create(UserRequest $request): ResponseInterface
     {
         // 验证
         $data = $request->validated();
@@ -195,14 +94,14 @@ class UserController extends AbstractController
     /**
      * @param UserRequest $request
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(UserRequest $request, int $id)
+    public function update(UserRequest $request, int $id): ResponseInterface
     {
         // 验证
         $data = $request->validated();
@@ -221,35 +120,35 @@ class UserController extends AbstractController
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function edit(int $id)
+    public function edit(int $id): ResponseInterface
     {
         return $this->success($id);
     }
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id)
+    public function delete(int $id): ResponseInterface
     {
         //判断用户存在文章
-        if(Post::query()->where('author', $id)->first()){
+        if (Post::query()->where('author', $id)->first()) {
             return $this->fail([], '用户存在文章');
         }
         //判断用户存在评论
-        if(Comment::query()->where('user_id', $id)->first()){
+        if (Comment::query()->where('user_id', $id)->first()) {
             return $this->fail([], '用户存在评论');
         }
         $flag = User::query()->where('id', $id)->delete();

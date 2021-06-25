@@ -8,12 +8,14 @@ use App\Controller\AbstractController;
 use App\Model\Tag;
 use App\Request\TagRequest;
 use App\Resource\TagResource;
+use App\Services\TagService;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class TagController
@@ -23,50 +25,31 @@ use App\Middleware\PermissionMiddleware;
 class TagController extends AbstractController
 {
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param TagService $tagService
+     * @return ResponseInterface
      * @RequestMapping(path="index", methods="get")
      */
-    public function index()
+    public function index(TagService $tagService): ResponseInterface
     {
-        $id = $this->request->input('id', '%');
-        $value = $this->request->input('value', '%');
-        $status = $this->request->input('status', '%');
-        $pageSize = $this->request->query('pageSize') ?? 10;
-        $pageNo = $this->request->query('pageNo') ?? 1;
-
-        $permission = Tag::query()
-            ->where([
-                ['id', 'like', $id],
-                ['value', 'like', $value],
-                ['status', 'like', $status]
-            ])
-            ->paginate((int) $pageSize, ['*'], 'page', (int) $pageNo);
-        $permissions = $permission->toArray();
-
-        $data = [
-            'pageSize' => $permissions['per_page'],
-            'pageNo' => $permissions['current_page'],
-            'totalCount' => $permissions['total'],
-            'totalPage' => $permissions['to'],
-            'data' => TagResource::collection($permission),
-        ];
-        return $this->success($data);
+        //交给service处理
+        return $this->success($tagService->index($this->request));
     }
 
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param TagRequest $request
+     * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(TagRequest $request)
+    public function create(TagRequest $request): ResponseInterface
     {
         // 验证
         $data = $request->validated();
         $flag = (new TagResource(Tag::query()->create($data)))->toResponse();
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
@@ -75,19 +58,19 @@ class TagController extends AbstractController
     /**
      * @param TagRequest $request
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(TagRequest $request, int $id)
+    public function update(TagRequest $request, int $id): ResponseInterface
     {
         // 验证
         $data = $request->validated();
         $flag = Tag::query()->where('id', $id)->update($data);
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
@@ -95,31 +78,31 @@ class TagController extends AbstractController
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function edit(int $id)
+    public function edit(int $id): ResponseInterface
     {
         return $this->success($id);
     }
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id)
+    public function delete(int $id): ResponseInterface
     {
         $flag = Tag::query()->where('id', $id)->delete();
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();

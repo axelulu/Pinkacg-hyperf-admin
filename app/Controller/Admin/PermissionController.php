@@ -8,6 +8,7 @@ use App\Controller\AbstractController;
 use App\Model\AdminPermission;
 use App\Request\PermissionRequest;
 use App\Resource\PermissionResource;
+use App\Services\PermissionService;
 use Donjan\Casbin\Enforcer;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
@@ -15,6 +16,7 @@ use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class PermissionController
@@ -24,56 +26,32 @@ use App\Middleware\PermissionMiddleware;
 class PermissionController extends AbstractController
 {
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param PermissionService $permissionService
+     * @return ResponseInterface
      * @RequestMapping(path="index", methods="get")
      */
-    public function index()
+    public function index(PermissionService $permissionService): ResponseInterface
     {
-        $id = $this->request->input('id', '%');
-        $name = $this->request->input('name', '%');
-        $status = $this->request->input('status', '%');
-        $p_id = $this->request->input('p_id', '%');
-        $p_id_slug = (int) $this->request->input('p_id_slug') ? '=' : '>=';
-        $menu_slug = (int) $this->request->input('menu_slug') ? '=' : '<=';
-        $pageSize = $this->request->query('pageSize') ?? 1000;
-        $pageNo = $this->request->query('pageNo') ?? 1;
-
-        $permission = AdminPermission::query()
-            ->where([
-                ['id', 'like', $id],
-                ['name', 'like', $name],
-                ['status', 'like', $status],
-                ['p_id', $p_id_slug, $p_id],
-                ['is_menu', $menu_slug, 0]
-            ])
-            ->paginate((int) $pageSize, ['*'], 'page', (int) $pageNo);
-        $permissions = $permission->toArray();
-
-        $data = [
-            'pageSize' => $permissions['per_page'],
-            'pageNo' => $permissions['current_page'],
-            'totalCount' => $permissions['total'],
-            'totalPage' => $permissions['to'],
-            'data' => PermissionResource::collection($permission),
-        ];
-        return $this->success($data);
+        //交给service处理
+        return $this->success($permissionService->index($this->request));
     }
 
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param PermissionRequest $request
+     * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(PermissionRequest $request)
+    public function create(PermissionRequest $request): ResponseInterface
     {
         // 验证
         $data = $request->validated();
         $data['method'] = json_encode($data['method']);
         $flag = (new PermissionResource(AdminPermission::query()->create($data)))->toResponse();
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
@@ -82,20 +60,20 @@ class PermissionController extends AbstractController
     /**
      * @param PermissionRequest $request
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(PermissionRequest $request, int $id)
+    public function update(PermissionRequest $request, int $id): ResponseInterface
     {
         // 验证
         $data = $request->validated();
         $data['method'] = json_encode($data['method']);
         $flag = AdminPermission::query()->where('id', $id)->update($data);
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
@@ -103,75 +81,74 @@ class PermissionController extends AbstractController
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function edit(int $id)
+    public function edit(int $id): ResponseInterface
     {
         return $this->success();
     }
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id)
+    public function delete(int $id): ResponseInterface
     {
-        if(Enforcer::getUsersForRole((string)$id)){
+        if (Enforcer::getUsersForRole((string)$id)) {
             return $this->fail([], '角色存在用户！');
         }
         // 判断是否存在用户角色
-        if(AdminPermission::query()->where('id', $id)->delete()){
+        if (AdminPermission::query()->where('id', $id)->delete()) {
             return $this->success();
         }
         return $this->fail();
     }
 
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="createByRole", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function createByRole()
+    public function createByRole(): ResponseInterface
     {
         // 验证
         $data = $this->request->all();
         $flag = (new PermissionResource(AdminPermission::query()->create($data)))->toResponse();
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
     }
 
     /**
-     * @param PermissionRequest $request
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="updateByRole/{id}", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateByRole(int $id)
+    public function updateByRole(int $id): ResponseInterface
     {
         // 验证
         $data = $this->request->all();
         $data['method'] = json_encode($data['method']);
         $flag = AdminPermission::query()->where('id', $id)->update($data);
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();

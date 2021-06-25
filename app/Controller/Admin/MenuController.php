@@ -8,12 +8,14 @@ use App\Controller\AbstractController;
 use App\Model\AdminPermission;
 use App\Request\MenuRequest;
 use App\Resource\MenuResource;
+use App\Services\MenuService;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class MenuController
@@ -23,56 +25,32 @@ use App\Middleware\PermissionMiddleware;
 class MenuController extends AbstractController
 {
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param MenuService $service
+     * @return ResponseInterface
      * @RequestMapping(path="index", methods="get")
      */
-    public function index()
+    public function index(MenuService $service): ResponseInterface
     {
-        $id = $this->request->input('id', '%');
-        $name = $this->request->input('name', '%');
-        $status = $this->request->input('status', '%');
-        $p_id = $this->request->input('p_id', '%');
-        $menu_slug = $this->request->input('menu_slug', '=');
-        $p_id_slug = (int) $this->request->input('p_id_slug') ? '=' : '>=';
-        $pageSize = $this->request->query('pageSize') ?? 1000;
-        $pageNo = $this->request->query('pageNo') ?? 1;
-
-        $permission = AdminPermission::query()
-            ->where([
-                ['id', 'like', $id],
-                ['name', 'like', $name],
-                ['status', 'like', $status],
-                ['p_id', $p_id_slug, $p_id],
-                ['is_menu', $menu_slug, 1]
-            ])
-            ->paginate((int) $pageSize, ['*'], 'page', (int) $pageNo);
-        $permissions = $permission->toArray();
-
-        $data = [
-            'pageSize' => $permissions['per_page'],
-            'pageNo' => $permissions['current_page'],
-            'totalCount' => $permissions['total'],
-            'totalPage' => $permissions['to'],
-            'data' => MenuResource::collection($permission),
-        ];
-        return $this->success($data);
+        //交给service处理
+        return $this->success($service->index($this->request));
     }
 
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param MenuRequest $request
+     * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(MenuRequest $request)
+    public function create(MenuRequest $request): ResponseInterface
     {
         // 验证
         $data = $request->validated();
         $data['method'] = json_encode($data['method']);
         $flag = (new MenuResource(AdminPermission::query()->create($data)))->toResponse();
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
@@ -81,20 +59,20 @@ class MenuController extends AbstractController
     /**
      * @param MenuRequest $request
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(MenuRequest $request, int $id)
+    public function update(MenuRequest $request, int $id): ResponseInterface
     {
         // 验证
         $data = $request->validated();
         $data['method'] = json_encode($data['method']);
         $flag = AdminPermission::query()->where('id', $id)->update($data);
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
@@ -102,35 +80,35 @@ class MenuController extends AbstractController
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function edit(int $id)
+    public function edit(int $id): ResponseInterface
     {
         return $this->success();
     }
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id)
+    public function delete(int $id): ResponseInterface
     {
         //存在子菜单
-        if(AdminPermission::query()->where('p_id', $id)){
+        if (AdminPermission::query()->where('p_id', $id)) {
             return $this->fail([], '存在子菜单');
         }
         //有用户选择此菜单
-        if(AdminPermission::query()->where('id', $id)->delete()){
+        if (AdminPermission::query()->where('id', $id)->delete()) {
             return $this->success();
         }
         return $this->fail();

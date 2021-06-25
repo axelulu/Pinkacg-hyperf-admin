@@ -9,12 +9,14 @@ use App\Model\Category;
 use App\Model\Post;
 use App\Request\CategoryRequest;
 use App\Resource\CategoryResource;
+use App\Services\CategoryService;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class CategoryController
@@ -24,75 +26,52 @@ use App\Middleware\PermissionMiddleware;
 class CategoryController extends AbstractController
 {
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param CategoryService $categoryService
+     * @return ResponseInterface
      * @RequestMapping(path="index", methods="get")
      */
-    public function index()
+    public function index(CategoryService $categoryService): ResponseInterface
     {
-        $id = $this->request->input('id', '%');
-        $label = $this->request->input('label', '%');
-        $value = $this->request->input('value', '%');
-        $son_slug = (int) $this->request->input('son_slug') ? '=' : '>=';
-        $son = $this->request->input('son', '%');
-        $status = $this->request->input('status', 1);
-        $pageSize = $this->request->query('pageSize') ?? 10;
-        $pageNo = $this->request->query('pageNo') ?? 1;
-
-        $permission = Category::query()
-            ->where([
-                ['id', 'like', $id],
-                ['label', 'like', $label],
-                ['value', 'like', $value],
-                ['son', $son_slug, $son],
-                ['status', 'like', $status]
-            ])
-            ->paginate((int) $pageSize, ['*'], 'page', (int) $pageNo);
-        $permissions = $permission->toArray();
-
-        $data = [
-            'pageSize' => $permissions['per_page'],
-            'pageNo' => $permissions['current_page'],
-            'totalCount' => $permissions['total'],
-            'totalPage' => $permissions['to'],
-            'data' => CategoryResource::collection($permission),
-        ];
-        return $this->success($data);
+        //交给service处理
+        return $this->success($categoryService->index($this->request));
     }
 
     /**
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param CategoryRequest $request
+     * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(CategoryRequest $request)
+    public function create(CategoryRequest $request): ResponseInterface
     {
         // 验证
         $data = $request->validated();
         $flag = (new CategoryResource(Category::query()->create($data)))->toResponse();
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
     }
 
     /**
+     * @param CategoryRequest $request
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(CategoryRequest $request, int $id)
+    public function update(CategoryRequest $request, int $id): ResponseInterface
     {
         // 验证
         $data = $request->validated();
         $flag = Category::query()->where('id', $id)->update($data);
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
@@ -100,14 +79,14 @@ class CategoryController extends AbstractController
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function edit(int $id)
+    public function edit(int $id): ResponseInterface
     {
         $category = Category::query()
             ->where('id', $id)
@@ -121,26 +100,26 @@ class CategoryController extends AbstractController
 
     /**
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id)
+    public function delete(int $id): ResponseInterface
     {
         //是否有子分类
-        if(Category::query()->where('son', $id)->first()){
+        if (Category::query()->where('son', $id)->first()) {
             return $this->fail([], '存在子分类');
         }
         //分类是否有文章
         $category = (Category::query()->select('value')->where('id', $id)->first())['value'];
-        if(Post::query()->where('menu', '"' . $category . '"')->first()){
+        if (Post::query()->where('menu', '"' . $category . '"')->first()) {
             return $this->fail([], '分类存在文章');
         }
         $flag = Category::query()->where('id', $id)->delete();
-        if($flag){
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();
