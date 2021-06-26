@@ -36,7 +36,6 @@
         "overtrue/flysystem-qiniu": "^1.0",
         "phper666/jwt-auth": "^3.0",
         "xxtime/flysystem-aliyun-oss": "^1.5",
-        "ext-json": "Required to use JSON."
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.14",
