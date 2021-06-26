@@ -22,7 +22,7 @@ class RoleService extends Service
 
     public function index($request): array
     {
-        $pageSize = $request->query('pageSize') ?? 10;
+        $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
         $role = AdminRole::query()

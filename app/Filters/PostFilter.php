@@ -7,7 +7,7 @@ class PostFilter extends Filter
 {
     protected $simpleFilters = [
         'id' => ['like', ''],
-        'title' => ['like', ''],
+        'title' => ['like', '%'],
         'status' => ['like', ''],
         'type' => ['like', ''],
         'author' => ['like', ''],
