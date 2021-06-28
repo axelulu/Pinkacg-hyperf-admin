@@ -101,6 +101,7 @@ class AuthController extends AbstractController
     public function getData(JWT $JWT): ResponseInterface
     {
         $data = [
+            'info' => $JWT->getParserData(),
             'cache_time' => $JWT->getTokenDynamicCacheTime(), // 获取token的有效时间，动态的
         ];
         return $this->success($data);

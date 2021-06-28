@@ -44,11 +44,9 @@ abstract class Filter
     /**
      * 应用过滤
      *
-     * @param $builder
-     *
-     * @return mixed
+     * @return array
      */
-    public function apply()
+    public function apply(): array
     {
         $filterResult = [];
         foreach ($this->getFilters() as $filter => $value) {
@@ -60,11 +58,10 @@ abstract class Filter
                 array_push($filterResult, [$filter, $op[0], $op[1] . $value . $op[1]]);
             }
         }
-        var_dump($filterResult);
         return $filterResult;
     }
 
-    public function getFilters()
+    public function getFilters(): array
     {
         return $this->request->inputs(array_merge($this->filters, array_keys($this->simpleFilters)));
     }

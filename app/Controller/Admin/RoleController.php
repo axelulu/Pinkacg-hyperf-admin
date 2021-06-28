@@ -70,7 +70,7 @@ class RoleController extends AbstractController
     {
         //判断权限
         $rolePermission = $this->request->input('rolePermission');
-        if ($rolePermission) {
+        if (isset($rolePermission)) {
             Enforcer::deletePermissionsForUser('permission_' . $id);
             foreach ($rolePermission as $k => $v) {
                 Enforcer::addPermissionForUser('permission_' . $id, '*', '*', $v);

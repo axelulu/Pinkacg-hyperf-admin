@@ -12,6 +12,7 @@
     "description": "A coroutine framework that focuses on hyperspeed and flexible, specifically use for build microservices and middlewares.",
     "license": "Apache-2.0",
     "require": {
+        "yurunsoft/phpmailer-swoole":"~1.0",
         "php": ">=7.3",
         "donjan-deng/hyperf-casbin": "^3.1",
         "hyperf/cache": "~2.1.0",
@@ -23,7 +24,6 @@
         "hyperf/framework": "~2.1.0",
         "hyperf/grpc-client": "~2.1.0",
         "hyperf/grpc-server": "~2.1.0",
-        "hyperf/guzzle": "^2.1",
         "hyperf/http-server": "~2.1.0",
         "hyperf/logger": "~2.1.0",
         "hyperf/memory": "~2.1.0",
