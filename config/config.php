@@ -16,6 +16,13 @@ return [
     'app_name' => env('APP_NAME', 'skeleton'),
     'app_env' => env('APP_ENV', 'dev'),
     'scan_cacheable' => env('SCAN_CACHEABLE', false),
+
+    // 是否记录日志
+    'app_log' => env('APP_LOG', false),
+
+    // 是否记录框架的日志
+    'hf_log' => env('HF_LOG', false),
+
     StdoutLoggerInterface::class => [
         'log_level' => [
             LogLevel::ALERT,

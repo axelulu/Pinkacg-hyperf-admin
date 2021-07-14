@@ -15,16 +15,29 @@ class CategoryResource extends JsonResource
      */
     public function toArray(): array
     {
-        return [
-            'id' => $this->id,
-            'label' => $this->label,
-            'value' => $this->value,
-            'son' => $this->son,
-            'icon' => $this->icon,
-            'status' => (int) $this->status ? true : false,
-            'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
-            'children' => CategoryChildrenResource::collection(Category::query()->where('son', $this->id)->get()),
-            'num' => Post::query()->where('menu', '"' . $this->value . '"')->count()
-        ];
+        if (count(Category::query()->where('son', $this->id)->get()) > 0) {
+            return [
+                'id' => $this->id,
+                'label' => $this->label,
+                'value' => $this->value,
+                'son' => $this->son,
+                'icon' => $this->icon,
+                'status' => (bool)((int)$this->status),
+                'updated_at' => str_replace(array('T', 'Z'), ' ', $this->updated_at),
+                'children' => CategoryResource::collection(Category::query()->where('son', $this->id)->get()),
+                'num' => Post::query()->where('menu', '"' . $this->value . '"')->count()
+            ];
+        } else {
+            return [
+                'id' => $this->id,
+                'label' => $this->label,
+                'value' => $this->value,
+                'son' => $this->son,
+                'icon' => $this->icon,
+                'status' => (bool)((int)$this->status),
+                'updated_at' => str_replace(array('T', 'Z'), ' ', $this->updated_at),
+                'num' => Post::query()->where('menu', '"' . $this->value . '"')->count()
+            ];
+        }
     }
 }

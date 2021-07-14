@@ -9,5 +9,10 @@ declare(strict_types=1);
  * @contact  group@hyperf.io
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
+
+use App\Common\StdoutLoggerFactory;
+use Hyperf\Contract\StdoutLoggerInterface;
+
 return [
+//    StdoutLoggerInterface::class => StdoutLoggerFactory::class,
 ];

@@ -49,7 +49,8 @@ class CategoryController extends AbstractController
     {
         // 验证
         $data = $request->validated();
-        $flag = (new CategoryResource(Category::query()->create($data)))->toResponse();
+        $data['son'] = json_encode($data['son']);
+        $flag = Category::query()->create($data);
         if ($flag) {
             return $this->success();
         }
@@ -70,6 +71,7 @@ class CategoryController extends AbstractController
     {
         // 验证
         $data = $request->validated();
+        $data['son'] = json_encode($data['son']);
         $flag = Category::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();

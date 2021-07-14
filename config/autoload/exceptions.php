@@ -10,6 +10,7 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
 
+use App\Exception\Handler\JtwExceptionHandler;
 use Hyperf\Validation\ValidationExceptionHandler;
 
 return [
@@ -17,8 +18,8 @@ return [
         'http' => [
             Hyperf\HttpServer\Exception\Handler\HttpExceptionHandler::class,
             App\Exception\Handler\AppExceptionHandler::class,
-            \Hyperf\Validation\ValidationExceptionHandler::class,
-            \App\Exception\Handler\JtwExceptionHandler::class,
+            ValidationExceptionHandler::class,
+            JtwExceptionHandler::class,
         ],
     ],
 ];

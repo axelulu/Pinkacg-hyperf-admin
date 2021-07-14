@@ -3,6 +3,7 @@
 declare (strict_types=1);
 namespace App\Model;
 
+use App\Casts\Json;
 use Hyperf\DbConnection\Model\Model;
 use Hyperf\Database\Model\SoftDeletes;
 /**
@@ -37,5 +38,5 @@ class Category extends Model
      *
      * @var array
      */
-    protected $casts = ['id' => 'integer', 'sort' => 'integer', 'check' => 'integer', 'delete' => 'integer', 'created_at' => 'datetime', 'updated_at' => 'datetime'];
+    protected $casts = ['id' => 'integer', 'sort' => 'integer', 'check' => 'integer', 'delete' => 'integer', 'created_at' => 'datetime', 'updated_at' => 'datetime', 'son' => Json::class,];
 }

@@ -28,7 +28,7 @@ class PostResource extends JsonResource
             'status' => $this->status,
             'comment_status' => (bool)((int)$this->comment_status),
             'menu' => json_decode($this->menu),
-            'menuMeta' => (Category::query()->select('label', 'value')->where('value', json_decode($this->menu))->first()->toArray()),
+            'menuMeta' => self::getMenuMeta($this->menu),
             'tag' => json_decode($this->tag),
             'download_status' => (bool)((int)$this->download_status),
             'download' => json_decode($this->download),
@@ -38,5 +38,14 @@ class PostResource extends JsonResource
             'header_img' => $this->header_img,
             'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
         ];
+    }
+
+    private function getMenuMeta($menu): array
+    {
+        $values = [];
+        foreach(json_decode($menu) as $index => $value) {
+            array_push($values, Category::query()->select('label', 'value')->where('id', $value)->first()->toArray());
+        }
+        return $values;
     }
 }
