@@ -49,7 +49,19 @@ class PostController extends AbstractController
     {
         // 验证
         $data = $request->validated();
-        $flag = (new PostResource(Post::query()->create($data)))->toResponse();
+        $flag = Post::query()->create($data)->toArray();
+
+        //转移文件
+        foreach ($data['content_file'] as $k => $v) {
+            if ($v['filename']) {
+                $data['content_file'][$k] = self::transferFile($flag['id'], $v, 'post_attachment', $data['author']);
+                $path = $data['content_file'][$k];
+                $data['content'] = preg_replace("/<[img|IMG].*?src=[\'|\"](.*?)\/swap\/" . $v['filename'] . ".*?[\'|\"].*?[\/]?>/", '<img src="${1}/' . $path . '${2}" style="max-width:100%">', $data['content']);
+            }
+        }
+        unset($data['content_file']);
+        $data['header_img'] = self::transferFile($flag['id'], $data['header_img'], 'post_attachment', $flag['author']);
+        $flag = Post::query()->where('id', $flag['id'])->update($data);
         if ($flag) {
             return $this->success();
         }
@@ -70,6 +82,17 @@ class PostController extends AbstractController
     {
         // 验证
         $data = $request->validated();
+
+        //转移文件
+        foreach ($data['content_file'] as $k => $v) {
+            if ($v['filename']) {
+                $data['content_file'][$k] = self::transferFile($id, $v, 'post_attachment', $data['author']);
+                $path = $data['content_file'][$k];
+                $data['content'] = preg_replace("/<[img|IMG].*?src=[\'|\"](.*?)\/swap\/" . $v['filename'] . ".*?[\'|\"].*?[\/]?>/", '<img src="${1}/' . $path . '${2}" style="max-width:100%">', $data['content']);
+            }
+        }
+        unset($data['content_file']);
+        $data['header_img'] = self::transferFile($id, $data['header_img'], 'post_attachment', $data['author']);
         $flag = Post::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();

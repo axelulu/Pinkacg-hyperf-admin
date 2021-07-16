@@ -6,6 +6,8 @@ namespace App\Controller\Admin;
 
 
 use App\Controller\AbstractController;
+use App\Model\Attachment;
+use App\Model\Setting;
 use App\Request\UploadRequest;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
@@ -25,69 +27,32 @@ use Psr\Http\Message\ResponseInterface;
 class UploadController extends AbstractController
 {
     /**
+     * 文件中转站（存在swap目录）
      * @param UploadRequest $request
      * @param Filesystem $filesystem
      * @return ResponseInterface
      * @throws FileExistsException
-     * @RequestMapping(path="uploadAvatar", methods="post")
+     * @RequestMapping(path="uploadFile", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function uploadAvatar(UploadRequest $request, Filesystem $filesystem): ResponseInterface
-    {
-        $file = $request->validated();
-        $avatar = $file['file'];
-        $userId = $file['id'];
-        if (!isset($userId)) {
-            return $this->fail([], '未选择用户');
-        }
-        if (!$avatar->isValid()) {
-            return $this->fail([], '文件错误');
-        }
-        //获取扩展名
-        $extension = $avatar->getExtension();
-        //构建图片链接
-        $avatarlink = 'userAvatar/' . $userId . '/' . md5(time() . $avatar->getClientFilename()) . '.' . $extension;
-        $filelink = 'uploads/' . $avatarlink;
-        $stream = fopen($avatar->getRealPath(), 'r+');
-        $filesystem->writeStream(
-            $filelink,
-            $stream
-        );
-        fclose($stream);
-        return $this->success([
-            'link' => $avatarlink,
-        ], '上传成功');
-    }
-
-    /**
-     * @param UploadRequest $request
-     * @param Filesystem $filesystem
-     * @return ResponseInterface
-     * @throws FileExistsException
-     * @RequestMapping(path="uploadPostImg", methods="post")
-     * @Middlewares({
-     *     @Middleware(JWTAuthMiddleware::class),
-     *     @Middleware(PermissionMiddleware::class)
-     * })
-     */
-    public function uploadPostImg(UploadRequest $request, Filesystem $filesystem): ResponseInterface
+    public function uploadFile(UploadRequest $request, Filesystem $filesystem): ResponseInterface
     {
         $file = $request->validated();
         $postImg = $file['file'];
-        $userId = $file['id'];
-        if (!isset($userId)) {
-            return $this->fail([], '未选择文章');
+        if (isset($file['id'])) {
+            Attachment::query()->where('id', $file['id'])->delete();
         }
         if (!$postImg->isValid()) {
             return $this->fail([], '文件错误');
         }
         //获取扩展名
         $extension = $postImg->getExtension();
+        $filename = md5(time() . $postImg->getClientFilename());
         //构建图片链接
-        $postImglink = 'userPost/' . $userId . '/' . md5(time() . $postImg->getClientFilename()) . '.' . $extension;
+        $postImglink = 'swap/' . $filename . '.' . $extension;
         $filelink = 'uploads/' . $postImglink;
         $stream = fopen($postImg->getRealPath(), 'r+');
         $filesystem->writeStream(
@@ -95,8 +60,21 @@ class UploadController extends AbstractController
             $stream
         );
         fclose($stream);
+        $data = [
+            'title' => $filename,
+            'original_name' => $postImg->getClientFilename(),
+            'filename' => $filename,
+            'path' => 'swap/',
+            'type' => $extension,
+            'cat' => 0,
+            'size' => $postImg->getSize(),
+            'post_id' => 0,
+            'user_id' => 0
+        ];
+        $data = Attachment::create($data);
         return $this->success([
             'link' => $postImglink,
+            'data' => $data
         ], '上传成功');
     }
 
@@ -115,13 +93,23 @@ class UploadController extends AbstractController
     {
         $file = $request->validated();
         $postImg = $file['file'];
+        $userId = $file['user_id'];
+        $postId = $file['post_id'];
+        if (isset($file['id']) && $file['id'] !== 0) {
+            Attachment::query()->where('id', $file['id'])->delete();
+        }
+        if (!isset($userId) || !isset($postId)) {
+            return $this->fail([], '文件参数缺失');
+        }
         if (!$postImg->isValid()) {
             return $this->fail([], '文件错误');
         }
         //获取扩展名
         $extension = $postImg->getExtension();
+        $filename = md5(time() . $postImg->getClientFilename());
+        $path = \Qiniu\json_decode((Setting::query()->where([['name', 'site_meta']])->get())[0]['value'])->system_attachment;
         //构建图片链接
-        $postImglink = 'siteMeta/' . md5(time() . $postImg->getClientFilename()) . '.' . $extension;
+        $postImglink = $path . '/' . $userId .  '/' . $postId . '/' . $filename . '.' . $extension;
         $filelink = 'uploads/' . $postImglink;
         $stream = fopen($postImg->getRealPath(), 'r+');
         $filesystem->writeStream(
@@ -129,8 +117,21 @@ class UploadController extends AbstractController
             $stream
         );
         fclose($stream);
+        $data = [
+            'title' => $filename,
+            'original_name' => $postImg->getClientFilename(),
+            'filename' => $filename,
+            'path' => $path . '/' . $userId .  '/' . $postId . '/',
+            'type' => $extension,
+            'cat' => $path,
+            'size' => $postImg->getSize(),
+            'post_id' => $postId,
+            'user_id' => $userId
+        ];
+        $data = Attachment::create($data);
         return $this->success([
             'link' => $postImglink,
+            'data' => $data
         ], '上传成功');
     }
 }

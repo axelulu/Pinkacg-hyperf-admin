@@ -13,9 +13,10 @@ use Hyperf\DbConnection\Model\Model;
  * @property string $path 
  * @property string $type 
  * @property string $cat 
- * @property int $size 
- * @property string $user_id 
- * @property Carbon $created_at 
+ * @property int $size
+ * @property string $user_id
+ * @property string $post_id
+ * @property Carbon $created_at
  * @property Carbon $updated_at 
  */
 class Attachment extends Model
@@ -31,11 +32,11 @@ class Attachment extends Model
      *
      * @var array
      */
-    protected $fillable = [];
+    protected $fillable = ['id', 'title', 'original_name', 'filename', 'path', 'type', 'cat', 'size', 'user_id', 'post_id', 'created_at', 'updated_at'];
     /**
      * The attributes that should be cast to native types.
      *
      * @var array
      */
-    protected $casts = ['id' => 'integer', 'cat' => 'integer', 'size' => 'integer', 'created_at' => 'datetime', 'updated_at' => 'datetime'];
+    protected $casts = ['id' => 'integer', 'size' => 'integer', 'created_at' => 'datetime', 'updated_at' => 'datetime'];
 }

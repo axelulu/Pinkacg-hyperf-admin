@@ -22,7 +22,8 @@ class AttachmentResource extends JsonResource
             'type' => $this->type,
             'cat' => $this->cat,
             'size' => (int)$this->size,
-            'user_id' => (bool)((int)$this->user_id),
+            'user_id' => (int)$this->user_id,
+            'post_id' => (int)$this->post_id,
             'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
         ];
     }

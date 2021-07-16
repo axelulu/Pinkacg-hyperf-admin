@@ -12,9 +12,15 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Model\Attachment;
+use App\Model\Setting;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface;
+use \League\Flysystem\Filesystem;
+use League\Flysystem\FileExistsException;
+use League\Flysystem\FileNotFoundException;
+use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 use Psr\Container\ContainerInterface;
 use Swoole\Coroutine\Channel;
@@ -41,11 +47,20 @@ abstract class AbstractController
     protected $response;
 
     /**
+     * AbstractController constructor.
+     * @param Filesystem $filesystem
+     */
+    public function __construct(Filesystem $filesystem)
+    {
+        $this->filesystem = $filesystem;
+    }
+
+    /**
      * @param array $data
      * @param string $message
      * @return \Psr\Http\Message\ResponseInterface
      */
-    public function success(array $data = [], $message = '操作成功')
+    public function success(array $data = [], string $message = '操作成功'): \Psr\Http\Message\ResponseInterface
     {
         $res = [
             'code' => 200,
@@ -60,7 +75,7 @@ abstract class AbstractController
      * @param string|null $message
      * @return \Psr\Http\Message\ResponseInterface
      */
-    public function fail(array $data = [], $message = '操作失败')
+    public function fail(array $data = [], ?string $message = '操作失败'): \Psr\Http\Message\ResponseInterface
     {
         $res = [
             'code' => 401,
@@ -74,7 +89,7 @@ abstract class AbstractController
      * @param $password
      * @return string
      */
-    public function passwordHash($password)
+    public function passwordHash($password): string
     {
         return sha1(md5($password) . md5(env('APP_PASSWORD_SALT', 'pinkacg')));
     }
@@ -83,11 +98,13 @@ abstract class AbstractController
      * @param string $title
      * @param string $body
      * @param $email
-     * @throws \PHPMailer\PHPMailer\Exception
+     * @return mixed
+     * @throws Exception
      */
-    public function sendMail($title, $body, $email) {
+    public function sendMail(string $title, string $body, $email)
+    {
         $channel = new Channel();
-        go(function() use ($title, $body, $email, $channel) {
+        go(function () use ($title, $body, $email, $channel) {
             $mail = new PHPMailer; //PHPMailer对象
             $mail->CharSet = 'UTF-8'; //设定邮件编码，默认ISO-8859-1，如果发中文此项必须设置，否则乱码
             $mail->IsSMTP(); // 设定使用SMTP服务
@@ -108,4 +125,43 @@ abstract class AbstractController
         return $channel->pop();
     }
 
+
+    /**
+     * @param $id
+     * @param $file
+     * @param $catType
+     * @param int $user_id
+     * @return \Psr\Http\Message\ResponseInterface|string
+     */
+    protected function transferFile($id, $file, $catType, $user_id = 0)
+    {
+        // 转移文件
+        if (isset($file['id'])) {
+            $cat_name = \Qiniu\json_decode((Setting::query()->where([['name', 'site_meta']])->get())[0]['value'])->$catType;
+            if ($catType === 'user_attachment') {
+                $file['user_id'] = $id;
+            } elseif ($catType === 'post_attachment') {
+                $file['post_id'] = $id;
+                $file['user_id'] = $user_id;
+            }
+            $path = $cat_name . '/' . $file['user_id'] . '/' . $file['post_id'] . '/';
+            $oldData = Attachment::query()->select('cat', 'path', 'user_id', 'post_id', 'filename', 'type')->where('id', $file['id'])->first();
+            // 转移文件到其他目录
+            try {
+                if ($this->filesystem->has('uploads/' . $oldData['path'] . $oldData['filename'] . '.' . $oldData['type'])) {
+                    $this->filesystem->copy('uploads/' . $oldData['path'] . $oldData['filename'] . '.' . $oldData['type'],
+                        'uploads/' . $path . $file['filename'] . '.' . $file['type']);
+                    $this->filesystem->delete('uploads/' . $oldData['path'] . $oldData['filename'] . '.' . $oldData['type']);
+                }
+            } catch (FileExistsException | FileNotFoundException $e) {
+                return $this->fail([], '文件转移出错！');
+            }
+            $file['path'] = $path;
+            $file['cat'] = $cat_name;
+            Attachment::query()->where('id', $file['id'])->update($file);
+            return $file['path'] . $file['filename'] . '.' . $file['type'];
+        } else {
+            return $file;
+        }
+    }
 }

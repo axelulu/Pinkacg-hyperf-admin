@@ -6,8 +6,10 @@ namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
 use App\Mail\OrderShipped;
+use App\Model\Attachment;
 use App\Model\Comment;
 use App\Model\Post;
+use App\Model\Setting;
 use App\Model\User;
 use App\Request\UserRequest;
 use App\Resource\UserResource;
@@ -20,6 +22,9 @@ use Hyperf\Redis\Redis;
 use Hyperf\Resource\Json\JsonResource;
 use Hyperf\Utils\ApplicationContext;
 use HyperfExt\Mail\Mail;
+use League\Flysystem\FileExistsException;
+use League\Flysystem\FileNotFoundException;
+use League\Flysystem\Filesystem;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Hyperf\HttpServer\Annotation\RequestMapping;
@@ -77,6 +82,7 @@ class UserController extends AbstractController
 
     /**
      * @param UserRequest $request
+     * @param Filesystem $filesystem
      * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
      * @Middlewares({
@@ -92,9 +98,28 @@ class UserController extends AbstractController
         if (User::query()->where('email', $data['email'])->first()) {
             return $this->fail([], '邮箱已存在');
         }
+        $user_role = $data['user_role'];
+        unset($data['user_role']);
+
+        //头像和背景文件
+        $avatar = $data['avatar'];
+        $background = $data['background'];
+
+        //头像和背景图片
+        $data['background'] = $data['background']['path'] . $data['background']['filename'] . '.' . $data['background']['type'];
+        $data['avatar'] = $data['avatar']['path'] . $data['avatar']['filename'] . '.' . $data['avatar']['type'];
+
+        //创建用户
         $flag = UserResource::make(User::query()->create($data));
+        // 转移头像文件
+        $data['avatar'] = self::transferFile($flag['id'], $avatar, 'user_attachment');
+        // 转移背景文件
+        $data['background'] = self::transferFile($flag['id'], $background, 'user_attachment');
+
+        //更新用户
+        $flag = User::query()->where('id', $flag['id'])->update($data);
         //赋予权限
-        Enforcer::addRoleForUser('roles_' . $flag['id'], $data['user_role']);
+        Enforcer::addRoleForUser('roles_' . $flag['id'], $user_role);
         if ($flag) {
             return $this->success();
         }
@@ -103,6 +128,7 @@ class UserController extends AbstractController
 
     /**
      * @param UserRequest $request
+     * @param Filesystem $filesystem
      * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
@@ -121,6 +147,12 @@ class UserController extends AbstractController
         // 验证
         $data = $request->validated();
         $data['password'] = $this->passwordHash($data['password']);
+
+        // 转移头像文件
+        $data['avatar'] = self::transferFile($id, $data['avatar'], 'user_attachment');
+        // 转移背景文件
+        $data['background'] = self::transferFile($id, $data['background'], 'user_attachment');
+
         //赋予权限
         if (!Enforcer::hasRoleForUser('roles_' . $id, $data['user_role'])) {
             Enforcer::deleteRolesForUser('roles_' . $id);
@@ -197,14 +229,14 @@ class UserController extends AbstractController
         if ($user['id'] !== $id) {
             return $this->fail([], '用户id错误');
         }
-        $data = $this->request->inputs(['myConfirm', 'email'], ['','']);
+        $data = $this->request->inputs(['myConfirm', 'email'], ['', '']);
         //初始化
         $redis = ApplicationContext::getContainer()->get(Redis::class);
         //判断验证码
         if ($data['myConfirm'] === $redis->get('confirm' . $id)) {
             //更新邮箱
             User::query()->where('id', $id)->update([
-                'email'=> $data['email']
+                'email' => $data['email']
             ]);
             return $this->success();
         }
@@ -231,10 +263,10 @@ class UserController extends AbstractController
             //初始化
             $redis = ApplicationContext::getContainer()->get(Redis::class);
             //生成验证码
-            while(($authnum=rand()%10000)<1000);
+            while (($authnum = rand() % 10000) < 1000) ;
             //存到redis里
             $redis->set('confirm' . $id, $authnum, 60);
-            if($this->sendMail('邮箱验证', $authnum, $email)){
+            if ($this->sendMail('邮箱验证', $authnum, $email)) {
                 return $this->success();
             }
         }

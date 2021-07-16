@@ -22,13 +22,14 @@ class PostRequest extends FormRequest
     public function rules(): array
     {
         return [
-//            'id' => 'required',
+            'id' => '',
             'author' => 'required',
             'title' => 'required',
             'content' => 'required',
+            'content_file' => '',
             'excerpt' => 'required',
             'type' => 'required',
-//            'guid' => 'required',
+            'guid' => '',
             'comment_count' => 'required',
             'status' => 'required',
             'comment_status' => 'required',

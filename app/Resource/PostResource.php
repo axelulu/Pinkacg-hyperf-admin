@@ -2,6 +2,7 @@
 
 namespace App\Resource;
 
+use App\Model\Attachment;
 use App\Model\Category;
 use App\Model\User;
 use Hyperf\Resource\Json\JsonResource;
@@ -21,6 +22,7 @@ class PostResource extends JsonResource
             'authorMeta' => (User::query()->select('name', 'id', 'avatar', 'credit', 'desc', 'background')->where('id', $this->author)->get()->toArray())[0],
             'title' => $this->title,
             'content' => $this->content,
+            'content_file' => AttachmentPostContentResource::collection(Attachment::query()->where([['user_id', $this->author], ['post_id', $this->id]])->get()),
             'excerpt' => $this->excerpt,
             'type' => $this->type,
             'guid' => $this->guid,

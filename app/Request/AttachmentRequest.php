@@ -22,7 +22,7 @@ class AttachmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-//            'id' => 'required',
+            'id' => '',
             'title' => 'required',
             'original_name' => 'required',
             'filename' => 'required',
@@ -31,6 +31,7 @@ class AttachmentRequest extends FormRequest
             'cat' => 'required',
             'size' => 'required',
             'user_id' => 'required',
+            'post_id' => 'required',
 //            'updated_at' => 'required',
         ];
     }
@@ -50,6 +51,7 @@ class AttachmentRequest extends FormRequest
             'cat:required' => '请输入分类！',
             'size:required' => '请输入文件大小！',
             'user_id:required' => '请输入用户id！',
+            'post_id:required' => '请输入文章id！',
 //            'updated_at:required' => '请输入更新时间！',
         ];
     }

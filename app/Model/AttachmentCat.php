@@ -25,7 +25,7 @@ class AttachmentCat extends Model
      *
      * @var array
      */
-    protected $fillable = [];
+    protected $fillable = ['id', 'name', 'slug', 'status', 'updated_at', 'created_at'];
     /**
      * The attributes that should be cast to native types.
      *

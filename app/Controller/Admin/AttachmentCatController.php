@@ -38,7 +38,7 @@ class AttachmentCatController extends AbstractController
     /**
      * @param AttachmentCatRequest $request
      * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="create", methods="attachmentCat")
+     * @RequestMapping(path="create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)

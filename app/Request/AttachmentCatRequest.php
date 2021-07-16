@@ -22,7 +22,23 @@ class AttachmentCatRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'id' => '',
+            'name' => '',
+            'slug' => '',
+            'status' => ''
+        ];
+    }
 
+    /**
+     * @return string[]
+     * 获取已定义验证规则的错误消息
+     */
+    public function messages(): array
+    {
+        return [
+            'name:required' => '请输入分类名称',
+            'slug:required' => '请输入分类标识',
+            'status:required' => '请输入分类状态'
         ];
     }
 }

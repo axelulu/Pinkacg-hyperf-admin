@@ -23,8 +23,9 @@ class UploadRequest extends FormRequest
     {
         return [
             'file' => 'required|max:25500',
-            'id' => 'required',
-//            'post' => 'required',
+            'id' => '',
+            'post_id' => 'integer',
+            'user_id' => 'integer',
         ];
     }
 
@@ -35,8 +36,6 @@ class UploadRequest extends FormRequest
     {
         return [
             'file.required' => '请输入图片！',
-            'id.required' => '请输入用户id！',
-//            'post.required' => '请输入图片！',
         ];
     }
 }
