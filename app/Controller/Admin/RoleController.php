@@ -88,20 +88,6 @@ class RoleController extends AbstractController
     /**
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="edit/{id}", methods="post")
-     * @Middlewares({
-     *     @Middleware(JWTAuthMiddleware::class),
-     *     @Middleware(PermissionMiddleware::class)
-     * })
-     */
-    public function edit(int $id): ResponseInterface
-    {
-        return $this->success($id);
-    }
-
-    /**
-     * @param int $id
-     * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),

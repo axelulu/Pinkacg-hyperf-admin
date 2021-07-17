@@ -44,15 +44,10 @@ class TagController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(TagRequest $request): ResponseInterface
+    public function create(TagService $tagService, TagRequest $request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $flag = (new TagResource(Tag::query()->create($data)))->toResponse();
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $tagService->create($request);
     }
 
     /**
@@ -74,20 +69,6 @@ class TagController extends AbstractController
             return $this->success();
         }
         return $this->fail();
-    }
-
-    /**
-     * @param int $id
-     * @return ResponseInterface
-     * @RequestMapping(path="edit/{id}", methods="post")
-     * @Middlewares({
-     *     @Middleware(JWTAuthMiddleware::class),
-     *     @Middleware(PermissionMiddleware::class)
-     * })
-     */
-    public function edit(int $id): ResponseInterface
-    {
-        return $this->success($id);
     }
 
     /**

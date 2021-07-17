@@ -6,32 +6,17 @@ namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
 use App\Mail\OrderShipped;
-use App\Model\Attachment;
-use App\Model\Comment;
-use App\Model\Post;
-use App\Model\Setting;
-use App\Model\User;
 use App\Request\UserRequest;
-use App\Resource\UserResource;
 use App\Services\UserService;
-use Donjan\Casbin\Enforcer;
+use HyperfExt\Mail\Mail;
+use Phper666\JWTAuth\JWT;
+use Psr\Http\Message\ResponseInterface;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Hyperf\Redis\Redis;
-use Hyperf\Resource\Json\JsonResource;
-use Hyperf\Utils\ApplicationContext;
-use HyperfExt\Mail\Mail;
-use League\Flysystem\FileExistsException;
-use League\Flysystem\FileNotFoundException;
-use League\Flysystem\Filesystem;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Hyperf\HttpServer\Annotation\RequestMapping;
-use Phper666\JWTAuth\JWT;
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\PHPMailer;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class UserController
@@ -71,6 +56,7 @@ class UserController extends AbstractController
 
     /**
      * @param UserService $userService
+     * @param UserRequest $userRequest
      * @return ResponseInterface
      * @RequestMapping(path="index", methods="get")
      */
@@ -81,8 +67,7 @@ class UserController extends AbstractController
     }
 
     /**
-     * @param UserRequest $request
-     * @param Filesystem $filesystem
+     * @param UserService $userService
      * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
      * @Middlewares({
@@ -90,45 +75,14 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(UserRequest $request): ResponseInterface
+    public function create(UserService $userService, UserRequest $userRequest): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $data['password'] = $this->passwordHash($data['password']);
-        if (User::query()->where('email', $data['email'])->first()) {
-            return $this->fail([], '邮箱已存在');
-        }
-        $user_role = $data['user_role'];
-        unset($data['user_role']);
-
-        //头像和背景文件
-        $avatar = $data['avatar'];
-        $background = $data['background'];
-
-        //头像和背景图片
-        $data['background'] = $data['background']['path'] . $data['background']['filename'] . '.' . $data['background']['type'];
-        $data['avatar'] = $data['avatar']['path'] . $data['avatar']['filename'] . '.' . $data['avatar']['type'];
-
-        //创建用户
-        $flag = UserResource::make(User::query()->create($data));
-        // 转移头像文件
-        $data['avatar'] = self::transferFile($flag['id'], $avatar, 'user_attachment');
-        // 转移背景文件
-        $data['background'] = self::transferFile($flag['id'], $background, 'user_attachment');
-
-        //更新用户
-        $flag = User::query()->where('id', $flag['id'])->update($data);
-        //赋予权限
-        Enforcer::addRoleForUser('roles_' . $flag['id'], $user_role);
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $userService->create($userRequest);
     }
 
     /**
-     * @param UserRequest $request
-     * @param Filesystem $filesystem
+     * @param UserService $userService
      * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
@@ -138,35 +92,14 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(UserRequest $request, int $id, JWT $JWT): ResponseInterface
+    public function update(UserService $userService, UserRequest $userRequest, int $id, JWT $JWT): ResponseInterface
     {
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
-            return $this->fail([], '用户id错误');
-        }
-        // 验证
-        $data = $request->validated();
-        $data['password'] = $this->passwordHash($data['password']);
-
-        // 转移头像文件
-        $data['avatar'] = self::transferFile($id, $data['avatar'], 'user_attachment');
-        // 转移背景文件
-        $data['background'] = self::transferFile($id, $data['background'], 'user_attachment');
-
-        //赋予权限
-        if (!Enforcer::hasRoleForUser('roles_' . $id, $data['user_role'])) {
-            Enforcer::deleteRolesForUser('roles_' . $id);
-            Enforcer::addRoleForUser('roles_' . $id, $data['user_role']);
-        }
-        unset($data['user_role']);
-        $flag = User::query()->where('id', $id)->update($data);
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $userService->update($userRequest, $id, $JWT);
     }
 
     /**
+     * @param UserService $userService
      * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
@@ -176,21 +109,14 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserAvatar(int $id, JWT $JWT): ResponseInterface
+    public function updateUserAvatar(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
-            return $this->fail([], '用户id错误');
-        }
-        $data = $this->request->inputs(['name', 'desc'], ['', '']);
-        $flag = User::query()->where('id', $id)->update($data);
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $userService->updateUserAvatar($id, $JWT);
     }
 
     /**
+     * @param UserService $userService
      * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
@@ -200,22 +126,16 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserInfo(int $id, JWT $JWT): ResponseInterface
+    public function updateUserInfo(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
-            return $this->fail([], '用户id错误');
-        }
-        $data = $this->request->inputs(['name', 'desc'], ['', '']);
-        $flag = User::query()->where('id', $id)->update($data);
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $userService->updateUserInfo($id, $JWT);
     }
 
     /**
+     * @param UserService $userService
      * @param int $id
+     * @param JWT $JWT
      * @return ResponseInterface
      * @RequestMapping(path="updateUserEmail/{id}", methods="post")
      * @Middlewares({
@@ -223,58 +143,33 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserEmail(int $id, JWT $JWT): ResponseInterface
+    public function updateUserEmail(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
-            return $this->fail([], '用户id错误');
-        }
-        $data = $this->request->inputs(['myConfirm', 'email'], ['', '']);
-        //初始化
-        $redis = ApplicationContext::getContainer()->get(Redis::class);
-        //判断验证码
-        if ($data['myConfirm'] === $redis->get('confirm' . $id)) {
-            //更新邮箱
-            User::query()->where('id', $id)->update([
-                'email' => $data['email']
-            ]);
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $userService->updateUserEmail($id, $JWT);
     }
 
     /**
+     * @param UserService $userService
+     * @param int $id
+     * @param JWT $JWT
      * @return ResponseInterface
-     * @throws Exception
      * @RequestMapping(path="sendChangeMail/{id}", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function sendUserMail(int $id, JWT $JWT): ResponseInterface
+    public function sendUserMail(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
-            return $this->fail([], '用户id错误');
-        }
-        $email = $this->request->input('email', '');
-        if (!empty($email)) {
-            //初始化
-            $redis = ApplicationContext::getContainer()->get(Redis::class);
-            //生成验证码
-            while (($authnum = rand() % 10000) < 1000) ;
-            //存到redis里
-            $redis->set('confirm' . $id, $authnum, 60);
-            if ($this->sendMail('邮箱验证', $authnum, $email)) {
-                return $this->success();
-            }
-        }
-        return $this->fail();
+        //交给service处理
+        return $userService->sendUserMail($id, $JWT);
     }
 
     /**
+     * @param UserService $userService
      * @param int $id
+     * @param JWT $JWT
      * @return ResponseInterface
      * @RequestMapping(path="updateUserPassword/{id}", methods="put")
      * @Middlewares({
@@ -282,43 +177,14 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserPassword(int $id, JWT $JWT): ResponseInterface
+    public function updateUserPassword(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
-            return $this->fail([], '用户id错误');
-        }
-        $data = $this->request->inputs(['password', 'newPassword', 'confirmPassword'], ['', '', '']);
-        if (empty($data['password']) || empty($data['newPassword']) || empty($data['confirmPassword'])) {
-            return $this->fail([], '密码为空');
-        }
-        if (User::query()->where('password', $this->passwordHash($data['password'])) && ($data['newPassword'] === $data['confirmPassword'])) {
-            $flag = User::query()->where('id', $id)->update([
-                'password' => $this->passwordHash($data['confirmPassword'])
-            ]);
-            if ($flag) {
-                return $this->success();
-            }
-            return $this->fail();
-        }
-        return $this->fail();
+        //交给service处理
+        return $userService->updateUserPassword($id, $JWT);
     }
 
     /**
-     * @param int $id
-     * @return ResponseInterface
-     * @RequestMapping(path="edit/{id}", methods="post")
-     * @Middlewares({
-     *     @Middleware(JWTAuthMiddleware::class),
-     *     @Middleware(PermissionMiddleware::class)
-     * })
-     */
-    public function edit(int $id): ResponseInterface
-    {
-        return $this->success($id);
-    }
-
-    /**
+     * @param UserService $userService
      * @param int $id
      * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
@@ -327,20 +193,9 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id): ResponseInterface
+    public function delete(UserService $userService, int $id): ResponseInterface
     {
-        //判断用户存在文章
-        if (Post::query()->where('author', $id)->first()) {
-            return $this->fail([], '用户存在文章');
-        }
-        //判断用户存在评论
-        if (Comment::query()->where('user_id', $id)->first()) {
-            return $this->fail([], '用户存在评论');
-        }
-        $flag = User::query()->where('id', $id)->delete();
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $userService->delete($id);
     }
 }

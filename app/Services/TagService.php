@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Filters\TagFilter;
 use App\Model\Tag;
 use App\Resource\TagResource;
+use Hyperf\Resource\Json\JsonResource;
 
 class TagService extends Service
 {
@@ -40,5 +41,16 @@ class TagService extends Service
             'totalPage' => $tags['to'],
             'data' => TagResource::collection($tag),
         ];
+    }
+
+    public function create($request)
+    {
+        // 验证
+        $data = $request->validated();
+        $flag = (new TagResource(Tag::query()->create($data)))->toResponse();
+        if ($flag) {
+            return $this->success();
+        }
+        return $this->fail();
     }
 }

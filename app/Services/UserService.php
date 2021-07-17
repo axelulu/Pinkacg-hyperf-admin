@@ -7,10 +7,15 @@ namespace App\Services;
 use App\Filters\UserFilter;
 use App\Model\AdminPermission;
 use App\Model\AdminRole;
+use App\Model\Comment;
+use App\Model\Post;
 use App\Model\User;
 use App\Resource\NavResource;
 use App\Resource\UserResource;
 use Donjan\Casbin\Enforcer;
+use Hyperf\Utils\ApplicationContext;
+use Hyperf\Redis\Redis;
+use Psr\Http\Message\ResponseInterface;
 
 class UserService extends Service
 {
@@ -19,7 +24,10 @@ class UserService extends Service
      */
     private $userFilter;
 
-    //使用过滤器
+    /**
+     * UserService constructor.
+     * @param UserFilter $userFilter
+     */
     public function __construct(UserFilter $userFilter)
     {
         $this->userFilter = $userFilter;
@@ -46,6 +54,10 @@ class UserService extends Service
         ];
     }
 
+    /**
+     * @param $JWT
+     * @return array
+     */
     public function info($JWT): array
     {
         $user = $JWT->getParserData();
@@ -120,6 +132,10 @@ class UserService extends Service
         ];
     }
 
+    /**
+     * @param $JWT
+     * @return array
+     */
     public function nav($JWT): array
     {
         $user = $JWT->getParserData();
@@ -128,13 +144,229 @@ class UserService extends Service
         $permissions = array();
         foreach ($permission as $k => $v) {
             //每一项权限
-            $permission_item = NavResource::make(AdminPermission::query()->where(['id'=> $v[3], 'is_menu'=> 1])->orderBy('sort', 'asc')->first());
+            $permission_item = NavResource::make(AdminPermission::query()->where(['id' => $v[3], 'is_menu' => 1])->orderBy('sort', 'asc')->first());
             $permissions[$k] = $permission_item;
         }
-        $data = NavResource::collection(AdminPermission::query()->where(['p_id'=> 0, 'is_menu'=> 1])->orderBy('sort', 'asc')->get());
-        foreach ($data as $k => $v){
+        $data = NavResource::collection(AdminPermission::query()->where(['p_id' => 0, 'is_menu' => 1])->orderBy('sort', 'asc')->get());
+        foreach ($data as $k => $v) {
             array_push($permissions, $v);
         }
         return $permissions;
+    }
+
+    /**
+     * @param $request
+     * @return ResponseInterface
+     */
+    public function create($request): ResponseInterface
+    {
+        // 验证
+        $data = $request->validated();
+        $data['password'] = $this->passwordHash($data['password']);
+        if (User::query()->where('email', $data['email'])->first()) {
+            return $this->fail([], '邮箱已存在');
+        }
+        $user_role = $data['user_role'];
+        unset($data['user_role']);
+
+        //头像和背景文件
+        $avatar = $data['avatar'];
+        $background = $data['background'];
+
+        //头像和背景图片
+        $data['background'] = $data['background']['path'] . $data['background']['filename'] . '.' . $data['background']['type'];
+        $data['avatar'] = $data['avatar']['path'] . $data['avatar']['filename'] . '.' . $data['avatar']['type'];
+
+        //创建用户
+        $flag = UserResource::make(User::query()->create($data));
+        // 转移头像文件
+        $data['avatar'] = self::transferFile($flag['id'], $avatar, 'user_attachment');
+        // 转移背景文件
+        $data['background'] = self::transferFile($flag['id'], $background, 'user_attachment');
+
+        //更新用户
+        $flag = User::query()->where('id', $flag['id'])->update($data);
+        //赋予权限
+        Enforcer::addRoleForUser('roles_' . $flag['id'], $user_role);
+        if ($flag) {
+            return $this->success();
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $request
+     * @param $id
+     * @param $JWT
+     * @return ResponseInterface
+     */
+    public function update($request, $id, $JWT): ResponseInterface
+    {
+        $user = $JWT->getParserData();
+        if ($user['id'] !== $id) {
+            return $this->fail([], '用户id错误');
+        }
+        // 验证
+        $data = $request->validated();
+        $data['password'] = $this->passwordHash($data['password']);
+
+        // 转移头像文件
+        $data['avatar'] = self::transferFile($id, $data['avatar'], 'user_attachment');
+        // 转移背景文件
+        $data['background'] = self::transferFile($id, $data['background'], 'user_attachment');
+
+        //赋予权限
+        if (!Enforcer::hasRoleForUser('roles_' . $id, $data['user_role'])) {
+            Enforcer::deleteRolesForUser('roles_' . $id);
+            Enforcer::addRoleForUser('roles_' . $id, $data['user_role']);
+        }
+        unset($data['user_role']);
+        $flag = User::query()->where('id', $id)->update($data);
+        if ($flag) {
+            return $this->success();
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $id
+     * @param $JWT
+     * @return ResponseInterface
+     */
+    public function updateUserAvatar($id, $JWT): ResponseInterface
+    {
+        // 更新用户头像
+        $user = $JWT->getParserData();
+        if ($user['id'] !== $id) {
+            return $this->fail([], '用户id错误');
+        }
+        $data = $this->request->inputs(['name', 'desc'], ['', '']);
+        $flag = User::query()->where('id', $id)->update($data);
+        if ($flag) {
+            return $this->success();
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $id
+     * @param $JWT
+     * @return ResponseInterface
+     */
+    public function updateUserInfo($id, $JWT): ResponseInterface
+    {
+        // 更新用户信息
+        $user = $JWT->getParserData();
+        if ($user['id'] !== $id) {
+            return $this->fail([], '用户id错误');
+        }
+        $data = $this->request->inputs(['name', 'desc'], ['', '']);
+        $flag = User::query()->where('id', $id)->update($data);
+        if ($flag) {
+            return $this->success();
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $id
+     * @param $JWT
+     * @return ResponseInterface
+     */
+    public function updateUserEmail($id, $JWT): ResponseInterface
+    {
+        // 更新用户邮件
+        $user = $JWT->getParserData();
+        if ($user['id'] !== $id) {
+            return $this->fail([], '用户id错误');
+        }
+        $data = $this->request->inputs(['myConfirm', 'email'], ['', '']);
+        //初始化
+        $redis = ApplicationContext::getContainer()->get(Redis::class);
+        //判断验证码
+        if ($data['myConfirm'] === $redis->get('confirm' . $id)) {
+            //更新邮箱
+            User::query()->where('id', $id)->update([
+                'email' => $data['email']
+            ]);
+            return $this->success();
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $id
+     * @param $JWT
+     * @return ResponseInterface
+     */
+    public function sendUserMail($id, $JWT): ResponseInterface
+    {
+        // 发送用户邮件
+        $user = $JWT->getParserData();
+        if ($user['id'] !== $id) {
+            return $this->fail([], '用户id错误');
+        }
+        $email = $this->request->input('email', '');
+        if (!empty($email)) {
+            //初始化
+            $redis = ApplicationContext::getContainer()->get(Redis::class);
+            //生成验证码
+            while (($authnum = rand() % 10000) < 1000) ;
+            //存到redis里
+            $redis->set('confirm' . $id, $authnum, 60);
+            if ($this->sendMail('邮箱验证', (string)$authnum, $email)) {
+                return $this->success();
+            }
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $id
+     * @param $JWT
+     * @return ResponseInterface
+     */
+    public function updateUserPassword($id, $JWT): ResponseInterface
+    {
+        // 更新用户密码
+        $user = $JWT->getParserData();
+        if ($user['id'] !== $id) {
+            return $this->fail([], '用户id错误');
+        }
+        $data = $this->request->inputs(['password', 'newPassword', 'confirmPassword'], ['', '', '']);
+        if (empty($data['password']) || empty($data['newPassword']) || empty($data['confirmPassword'])) {
+            return $this->fail([], '密码为空');
+        }
+        if (User::query()->where('password', $this->passwordHash($data['password'])) && ($data['newPassword'] === $data['confirmPassword'])) {
+            $flag = User::query()->where('id', $id)->update([
+                'password' => $this->passwordHash($data['confirmPassword'])
+            ]);
+            if ($flag) {
+                return $this->success();
+            }
+            return $this->fail();
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $id
+     * @return ResponseInterface
+     */
+    public function delete($id): ResponseInterface
+    {
+        //判断用户存在文章
+        if (Post::query()->where('author', $id)->first()) {
+            return $this->fail([], '用户存在文章');
+        }
+        //判断用户存在评论
+        if (Comment::query()->where('user_id', $id)->first()) {
+            return $this->fail([], '用户存在评论');
+        }
+        $flag = User::query()->where('id', $id)->delete();
+        if ($flag) {
+            return $this->success();
+        }
+        return $this->fail();
     }
 }

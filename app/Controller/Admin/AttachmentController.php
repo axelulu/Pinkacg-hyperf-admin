@@ -42,7 +42,6 @@ class AttachmentController extends AbstractController
     /**
      * @param AttachmentRequest $request
      * @param Filesystem $filesystem
-     * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
      * @RequestMapping(path="create", methods="post")
      * @Middlewares({

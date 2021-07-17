@@ -44,7 +44,7 @@ class AttachmentCatController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(AttachmentCatRequest $request)
+    public function create(AttachmentCatRequest $request): \Psr\Http\Message\ResponseInterface
     {
         // 验证
         $data = $request->validated();
@@ -65,7 +65,7 @@ class AttachmentCatController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(AttachmentCatRequest $request, int $id)
+    public function update(AttachmentCatRequest $request, int $id): \Psr\Http\Message\ResponseInterface
     {
         // 验证
         $data = $request->validated();
@@ -85,7 +85,7 @@ class AttachmentCatController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id)
+    public function delete(int $id): \Psr\Http\Message\ResponseInterface
     {
         $flag = AttachmentCat::query()->where('id', $id)->delete();
         if ($flag) {
