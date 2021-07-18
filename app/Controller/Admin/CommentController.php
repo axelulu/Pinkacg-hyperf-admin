@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Model\Comment;
 use App\Request\CommentRequest;
-use App\Resource\CommentResource;
 use App\Services\CommentService;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
@@ -32,10 +30,11 @@ class CommentController extends AbstractController
     public function index(CommentService $commentService): ResponseInterface
     {
         //交给service处理
-        return $this->success($commentService->index($this->request));
+        return $commentService->index($this->request);
     }
 
     /**
+     * @param CommentService $commentService
      * @param CommentRequest $request
      * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
@@ -44,18 +43,14 @@ class CommentController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(CommentRequest $request): ResponseInterface
+    public function create(CommentService $commentService, CommentRequest $request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $flag = (new CommentResource(Comment::query()->create($data)))->toResponse();
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $commentService->create($request);
     }
 
     /**
+     * @param CommentService $commentService
      * @param CommentRequest $request
      * @param int $id
      * @return ResponseInterface
@@ -65,32 +60,14 @@ class CommentController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(CommentRequest $request, int $id): ResponseInterface
+    public function update(CommentService $commentService, CommentRequest $request, int $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $flag = Comment::query()->where('id', $id)->update($data);
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $commentService->update($request, $id);
     }
 
     /**
-     * @param int $id
-     * @return ResponseInterface
-     * @RequestMapping(path="edit/{id}", methods="post")
-     * @Middlewares({
-     *     @Middleware(JWTAuthMiddleware::class),
-     *     @Middleware(PermissionMiddleware::class)
-     * })
-     */
-    public function edit(int $id): ResponseInterface
-    {
-        return $this->success();
-    }
-
-    /**
+     * @param CommentService $commentService
      * @param int $id
      * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
@@ -99,12 +76,9 @@ class CommentController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id): ResponseInterface
+    public function delete(CommentService $commentService, int $id): ResponseInterface
     {
-        $flag = Comment::query()->where('id', $id)->delete();
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $commentService->delete($id);
     }
 }

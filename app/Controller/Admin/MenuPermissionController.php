@@ -5,37 +5,37 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Request\PostRequest;
-use App\Services\PostService;
-use Psr\Http\Message\ResponseInterface;
+use App\Request\MenuPermissionRequest;
+use App\Services\MenuPermissionService;
 use Hyperf\HttpServer\Annotation\Controller;
+use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Hyperf\HttpServer\Annotation\RequestMapping;
-use App\Middleware\PermissionMiddleware;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\PermissionMiddleware;
+use Psr\Http\Message\ResponseInterface;
 
 /**
- * Class PostController
+ * Class MenuPermissionController
  * @package App\Controller\Admin
  * @Controller()
  */
-class PostController extends AbstractController
+class MenuPermissionController extends AbstractController
 {
     /**
-     * @param PostService $postService
+     * @param MenuPermissionService $menuService
      * @return ResponseInterface
      * @RequestMapping(path="index", methods="get")
      */
-    public function index(PostService $postService): ResponseInterface
+    public function index(MenuPermissionService $menuService): ResponseInterface
     {
         //交给service处理
-        return $postService->index($this->request);
+        return $menuService->index($this->request);
     }
 
     /**
-     * @param PostService $postService
-     * @param PostRequest $postRequest
+     * @param MenuPermissionService $menuService
+     * @param MenuPermissionRequest $request
      * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
      * @Middlewares({
@@ -43,15 +43,15 @@ class PostController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(PostService $postService, PostRequest $postRequest): ResponseInterface
+    public function create(MenuPermissionService $menuService, MenuPermissionRequest $request): ResponseInterface
     {
         //交给service处理
-        return $postService->create($postRequest);
+        return $menuService->create($request);
     }
 
     /**
-     * @param PostService $postService
-     * @param PostRequest $postRequest
+     * @param MenuPermissionService $menuService
+     * @param MenuPermissionRequest $request
      * @param int $id
      * @return ResponseInterface
      * @RequestMapping(path="update/{id}", methods="put")
@@ -60,14 +60,14 @@ class PostController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(PostService $postService, PostRequest $postRequest, int $id): ResponseInterface
+    public function update(MenuPermissionService $menuService, MenuPermissionRequest $request, int $id): ResponseInterface
     {
         //交给service处理
-        return $postService->update($postRequest, $id);
+        return $menuService->update($request, $id);
     }
 
     /**
-     * @param PostService $postService
+     * @param MenuPermissionService $menuService
      * @param int $id
      * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
@@ -76,9 +76,9 @@ class PostController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(PostService $postService, int $id): ResponseInterface
+    public function delete(MenuPermissionService $menuService, int $id): ResponseInterface
     {
         //交给service处理
-        return $postService->delete($id);
+        return $menuService->delete($id);
     }
 }

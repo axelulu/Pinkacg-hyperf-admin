@@ -7,26 +7,22 @@ use App\Filters\PostFilter;
 use App\Model\Comment;
 use App\Model\Post;
 use App\Resource\PostResource;
+use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
 
 class PostService extends Service
 {
     /**
+     * @Inject
      * @var PostFilter
      */
-    private $postFilter;
-
-    //使用过滤器
-    public function __construct(PostFilter $postFilter)
-    {
-        $this->postFilter = $postFilter;
-    }
+    protected $postFilter;
 
     /**
      * @param $request
-     * @return array
+     * @return ResponseInterface
      */
-    public function index($request): array
+    public function index($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 1000;
@@ -38,13 +34,13 @@ class PostService extends Service
             ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
         $permissions = $permission->toArray();
 
-        return [
+        return $this->success([
             'pageSize' => $permissions['per_page'],
             'pageNo' => $permissions['current_page'],
             'totalCount' => $permissions['total'],
             'totalPage' => $permissions['to'],
             'data' => PostResource::collection($permission),
-        ];
+        ]);
     }
 
     /**

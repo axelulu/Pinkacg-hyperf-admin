@@ -13,6 +13,7 @@ use App\Model\User;
 use App\Resource\NavResource;
 use App\Resource\UserResource;
 use Donjan\Casbin\Enforcer;
+use Hyperf\Di\Annotation\Inject;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Redis\Redis;
 use Psr\Http\Message\ResponseInterface;
@@ -20,20 +21,12 @@ use Psr\Http\Message\ResponseInterface;
 class UserService extends Service
 {
     /**
+     * @Inject
      * @var UserFilter
      */
-    private $userFilter;
+    protected $userFilter;
 
-    /**
-     * UserService constructor.
-     * @param UserFilter $userFilter
-     */
-    public function __construct(UserFilter $userFilter)
-    {
-        $this->userFilter = $userFilter;
-    }
-
-    public function index($request): array
+    public function index($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 1000;
@@ -45,25 +38,24 @@ class UserService extends Service
             ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
         $users = $user->toArray();
 
-        return [
+        return $this->success([
             'pageSize' => $users['per_page'],
             'pageNo' => $users['current_page'],
             'totalCount' => $users['total'],
             'totalPage' => $users['to'],
             'data' => UserResource::collection($user),
-        ];
+        ]);
     }
 
     /**
      * @param $JWT
-     * @return array
+     * @return ResponseInterface
      */
-    public function info($JWT): array
+    public function info($JWT): ResponseInterface
     {
         $user = $JWT->getParserData();
-        $role_id = Enforcer::getRolesForUser('roles_' . $user['id'])[0];
-        $role_meta = AdminRole::query()->where('id', $role_id)->first();
-        $permission = Enforcer::getPermissionsForUser('permission_' . $role_id);
+        $role_meta = $user['role_meta'];
+        $permission = $user['permission'];
         $permissions = array();
         foreach ($permission as $k => $v) {
             //每一项权限
@@ -95,7 +87,7 @@ class UserService extends Service
                 }
             }
             //重构权限数组
-            $permission_new_item['roleId'] = $role_meta['id'];
+            $permission_new_item['roleId'] = $role_meta->id;
             $permission_new_item['permissionId'] = $permission_item['id'];
             $permission_new_item['permissionName'] = $permission_item['name'];
             $permission_new_item['actions'] = '[["action" => "add","defaultCheck" => false,"describe" => "新增"],["action" => "query","defaultCheck" => false,"describe" => "查询"],["action" => "get","defaultCheck" => false,"describe" => "详情"],["action" => "update","defaultCheck" => false,"describe" => "修改"],["action" => "delete","defaultCheck" => false,"describe" => "删除"]]';
@@ -104,7 +96,7 @@ class UserService extends Service
             $permission_new_item['dataAccess'] = null;
             $permissions[$k] = $permission_new_item;
         }
-        return [
+        return $this->success([
             'id' => $user['id'],
             'name' => $user['name'],
             'username' => $user['username'],
@@ -120,27 +112,26 @@ class UserService extends Service
             'deleted' => 0,
             'roleId' => $user['username'],
             'role' => [
-                'id' => $role_meta['id'],
-                'name' => $role_meta['name'],
-                'describe' => $role_meta['description'],
-                'status' => $role_meta['status'],
+                'id' => $role_meta->id,
+                'name' => $role_meta->name,
+                'describe' => $role_meta->description,
+                'status' => $role_meta->status,
                 'creatorId' => 1,
-                'createTime' => $role_meta['created_at'],
+                'createTime' => $role_meta->created_at,
                 'deleted' => 0,
                 'permissions' => $permissions
             ]
-        ];
+        ]);
     }
 
     /**
      * @param $JWT
-     * @return array
+     * @return ResponseInterface
      */
-    public function nav($JWT): array
+    public function nav($JWT): ResponseInterface
     {
         $user = $JWT->getParserData();
-        $role_id = Enforcer::getRolesForUser('roles_' . $user['id'])[0];
-        $permission = Enforcer::getPermissionsForUser('permission_' . $role_id);
+        $permission = $user['permission'];
         $permissions = array();
         foreach ($permission as $k => $v) {
             //每一项权限
@@ -151,7 +142,7 @@ class UserService extends Service
         foreach ($data as $k => $v) {
             array_push($permissions, $v);
         }
-        return $permissions;
+        return $this->success($permissions);
     }
 
     /**
@@ -202,8 +193,8 @@ class UserService extends Service
      */
     public function update($request, $id, $JWT): ResponseInterface
     {
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
+        //判断是否是JWT用户
+        if (!self::isJWTUser($request, $JWT, $id)) {
             return $this->fail([], '用户id错误');
         }
         // 验证
@@ -229,17 +220,18 @@ class UserService extends Service
     }
 
     /**
+     * @param $request
      * @param $id
      * @param $JWT
      * @return ResponseInterface
      */
-    public function updateUserAvatar($id, $JWT): ResponseInterface
+    public function updateUserAvatar($request, $id, $JWT): ResponseInterface
     {
+        //判断是否是JWT用户
+        if (!self::isJWTUser($request, $JWT, $id)) {
+            return $this->fail([], '用户id错误');
+        }
         // 更新用户头像
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
-            return $this->fail([], '用户id错误');
-        }
         $data = $this->request->inputs(['name', 'desc'], ['', '']);
         $flag = User::query()->where('id', $id)->update($data);
         if ($flag) {
@@ -249,17 +241,18 @@ class UserService extends Service
     }
 
     /**
+     * @param $request
      * @param $id
      * @param $JWT
      * @return ResponseInterface
      */
-    public function updateUserInfo($id, $JWT): ResponseInterface
+    public function updateUserInfo($request, $id, $JWT): ResponseInterface
     {
+        //判断是否是JWT用户
+        if (!self::isJWTUser($request, $JWT, $id)) {
+            return $this->fail([], '用户id错误');
+        }
         // 更新用户信息
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
-            return $this->fail([], '用户id错误');
-        }
         $data = $this->request->inputs(['name', 'desc'], ['', '']);
         $flag = User::query()->where('id', $id)->update($data);
         if ($flag) {
@@ -269,17 +262,18 @@ class UserService extends Service
     }
 
     /**
+     * @param $request
      * @param $id
      * @param $JWT
      * @return ResponseInterface
      */
-    public function updateUserEmail($id, $JWT): ResponseInterface
+    public function updateUserEmail($request, $id, $JWT): ResponseInterface
     {
-        // 更新用户邮件
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
+        //判断是否是JWT用户
+        if (!self::isJWTUser($request, $JWT, $id)) {
             return $this->fail([], '用户id错误');
         }
+        // 更新用户邮件
         $data = $this->request->inputs(['myConfirm', 'email'], ['', '']);
         //初始化
         $redis = ApplicationContext::getContainer()->get(Redis::class);
@@ -295,17 +289,18 @@ class UserService extends Service
     }
 
     /**
+     * @param $request
      * @param $id
      * @param $JWT
      * @return ResponseInterface
      */
-    public function sendUserMail($id, $JWT): ResponseInterface
+    public function sendUserMail($request, $id, $JWT): ResponseInterface
     {
-        // 发送用户邮件
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
+        //判断是否是JWT用户
+        if (!self::isJWTUser($request, $JWT, $id)) {
             return $this->fail([], '用户id错误');
         }
+        // 发送用户邮件
         $email = $this->request->input('email', '');
         if (!empty($email)) {
             //初始化
@@ -322,17 +317,18 @@ class UserService extends Service
     }
 
     /**
+     * @param $request
      * @param $id
      * @param $JWT
      * @return ResponseInterface
      */
-    public function updateUserPassword($id, $JWT): ResponseInterface
+    public function updateUserPassword($request, $id, $JWT): ResponseInterface
     {
-        // 更新用户密码
-        $user = $JWT->getParserData();
-        if ($user['id'] !== $id) {
+        //判断是否是JWT用户
+        if (!self::isJWTUser($request, $JWT, $id)) {
             return $this->fail([], '用户id错误');
         }
+        // 更新用户密码
         $data = $this->request->inputs(['password', 'newPassword', 'confirmPassword'], ['', '', '']);
         if (empty($data['password']) || empty($data['newPassword']) || empty($data['confirmPassword'])) {
             return $this->fail([], '密码为空');
@@ -350,11 +346,17 @@ class UserService extends Service
     }
 
     /**
+     * @param $request
      * @param $id
+     * @param $JWT
      * @return ResponseInterface
      */
-    public function delete($id): ResponseInterface
+    public function delete($request, $id, $JWT): ResponseInterface
     {
+        //判断是否是JWT用户
+        if (!self::isJWTUser($request, $JWT, $id)) {
+            return $this->fail([], '用户id错误');
+        }
         //判断用户存在文章
         if (Post::query()->where('author', $id)->first()) {
             return $this->fail([], '用户存在文章');

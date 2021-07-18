@@ -6,22 +6,24 @@ namespace App\Services;
 
 use App\Filters\CategoryFilter;
 use App\Model\Category;
+use App\Model\Post;
 use App\Resource\CategoryResource;
+use Hyperf\Di\Annotation\Inject;
+use Psr\Http\Message\ResponseInterface;
 
 class CategoryService extends Service
 {
     /**
+     * @Inject
      * @var CategoryFilter
      */
-    private $categoryFilter;
+    protected $categoryFilter;
 
-    //使用过滤器
-    public function __construct(CategoryFilter $categoryFilter)
-    {
-        $this->categoryFilter = $categoryFilter;
-    }
-
-    public function index($request): array
+    /**
+     * @param $request
+     * @return ResponseInterface
+     */
+    public function index($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 1000;
@@ -33,12 +35,83 @@ class CategoryService extends Service
             ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
         $categorys = $category->toArray();
 
-        return [
+        return $this->success([
             'pageSize' => $categorys['per_page'],
             'pageNo' => $categorys['current_page'],
             'totalCount' => $categorys['total'],
             'totalPage' => $categorys['to'],
             'data' => CategoryResource::collection($category),
+        ]);
+    }
+
+    /**
+     * @param $request
+     * @return ResponseInterface
+     */
+    public function create($request): ResponseInterface
+    {
+        // 验证
+        $data = $request->validated();
+        $data['son'] = json_encode($data['son']);
+        $flag = Category::query()->create($data);
+        if ($flag) {
+            return $this->success();
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $request
+     * @param $id
+     * @return ResponseInterface
+     */
+    public function update($request, $id): ResponseInterface
+    {
+        // 验证
+        $data = $request->validated();
+        $data['son'] = json_encode($data['son']);
+        $flag = Category::query()->where('id', $id)->update($data);
+        if ($flag) {
+            return $this->success();
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $id
+     * @return ResponseInterface
+     */
+    public function edit($id): ResponseInterface
+    {
+        $category = Category::query()
+            ->where('id', $id)
+            ->toArray();
+
+        $data = [
+            'data' => $category,
         ];
+        return $this->success($data);
+    }
+
+    /**
+     * @param $id
+     * @return ResponseInterface
+     */
+    public function delete($id): ResponseInterface
+    {
+        //是否有子分类
+        if (Category::query()->where('son', $id)->first()) {
+            return $this->fail([], '存在子分类');
+        }
+        //分类是否有文章
+        $category = (Category::query()->select('value')->where('id', $id)->first())['value'];
+        if (Post::query()->where('menu', '"' . $category . '"')->first()) {
+            return $this->fail([], '分类存在文章');
+        }
+        $flag = Category::query()->where('id', $id)->delete();
+        if ($flag) {
+            return $this->success();
+        }
+        return $this->fail();
     }
 }

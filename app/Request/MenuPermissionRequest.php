@@ -6,7 +6,7 @@ namespace App\Request;
 
 use Hyperf\Validation\Request\FormRequest;
 
-class PermissionRequest extends FormRequest
+class MenuPermissionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -29,7 +29,7 @@ class PermissionRequest extends FormRequest
             'url' => 'required',
             'status' => 'required',
             'method' => 'required',
-//            'p_id' => 'required',
+            'p_id' => 'required',
             'is_menu' => 'required',
             'sort' => 'required',
         ];
@@ -49,7 +49,7 @@ class PermissionRequest extends FormRequest
             'url.required'  => '请输入url！',
             'status.required'  => '请输入状态！',
             'method.required'  => '请输入方法！',
-//            'p_id.required'  => '请输入父节点！',
+            'p_id.required'  => '请输入父节点！',
             'is_menu.required'  => '请输入菜单状态！',
             'sort.required'  => '请输入菜单排序！',
 //            'updated_at.required'  => '请输入更新时间！',

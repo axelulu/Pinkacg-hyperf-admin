@@ -24,7 +24,6 @@ class UserRequest extends FormRequest
         return [
             'avatar' => 'required|max:255',
             'background' => 'required|max:2550',
-//            'id' => 'required',
             'check' => 'required',
 //            'created_at' => 'required',
 //            'created_id' => 'required',

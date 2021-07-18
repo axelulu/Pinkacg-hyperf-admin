@@ -14,12 +14,14 @@ namespace App\Services;
 
 use App\Model\Attachment;
 use App\Model\Setting;
+use Donjan\Casbin\Enforcer;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use League\Flysystem\FileExistsException;
 use League\Flysystem\FileNotFoundException;
 use League\Flysystem\Filesystem;
-use Psr\Http\Message\ResponseInterface;
+use Hyperf\HttpServer\Contract\ResponseInterface;
+use Psr\Http\Message\ResponseInterface as Psr7ResponseInterface;
 
 abstract class Service
 {
@@ -30,20 +32,22 @@ abstract class Service
     protected $request;
 
     /**
-     * AbstractController constructor.
-     * @param Filesystem $filesystem
+     * @Inject
+     * @var ResponseInterface
      */
-    public function __construct(Filesystem $filesystem)
-    {
-        $this->filesystem = $filesystem;
-    }
+    protected $response;
+
+    /**
+     * @var Filesystem
+     */
+    protected $filesystem;
 
     /**
      * @param array $data
      * @param string $message
-     * @return ResponseInterface
+     * @return Psr7ResponseInterface
      */
-    public function success(array $data = [], string $message = '操作成功'): ResponseInterface
+    public function success(array $data = [], string $message = '操作成功'): Psr7ResponseInterface
     {
         $res = [
             'code' => 200,
@@ -56,9 +60,9 @@ abstract class Service
     /**
      * @param array $data
      * @param string|null $message
-     * @return ResponseInterface
+     * @return Psr7ResponseInterface
      */
-    public function fail(array $data = [], ?string $message = '操作失败'): ResponseInterface
+    public function fail(array $data = [], ?string $message = '操作失败'): Psr7ResponseInterface
     {
         $res = [
             'code' => 401,
@@ -66,6 +70,21 @@ abstract class Service
             'result' => $data ?: (object)[],
         ];
         return $this->response->json($res);
+    }
+
+    public function isJWTUser($request, $JWT, $id): bool
+    {
+        //判断是否是JWT用户
+        $user = $JWT->getParserData();
+        $all_permission = $request->getParsedBody();
+        var_dump($all_permission);
+        if (isset($all_permission['all_permission']) && $all_permission['all_permission'] === 'all_permission') {
+            return true;
+        }
+        if ((!isset($all_permission['all_permission']) || $all_permission['all_permission'] !== 'all_permission') && $user['id'] !== $id) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -82,7 +101,7 @@ abstract class Service
      * @param $file
      * @param $catType
      * @param int $user_id
-     * @return ResponseInterface|string
+     * @return Psr7ResponseInterface|string
      */
     protected function transferFile($id, $file, $catType, int $user_id = 0)
     {

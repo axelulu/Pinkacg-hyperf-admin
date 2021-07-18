@@ -15,7 +15,7 @@ class CategoryResource extends JsonResource
      */
     public function toArray(): array
     {
-        if (count(Category::query()->where('son', $this->id)->get()) > 0) {
+        if (Category::query()->where('son', $this->id)->get()->count() > 0) {
             return [
                 'id' => $this->id,
                 'label' => $this->label,

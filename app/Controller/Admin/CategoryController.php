@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Model\Category;
-use App\Model\Post;
 use App\Request\CategoryRequest;
-use App\Resource\CategoryResource;
 use App\Services\CategoryService;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
@@ -33,10 +30,11 @@ class CategoryController extends AbstractController
     public function index(CategoryService $categoryService): ResponseInterface
     {
         //交给service处理
-        return $this->success($categoryService->index($this->request));
+        return $categoryService->index($this->request);
     }
 
     /**
+     * @param CategoryService $categoryService
      * @param CategoryRequest $request
      * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
@@ -45,19 +43,14 @@ class CategoryController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(CategoryRequest $request): ResponseInterface
+    public function create(CategoryService $categoryService, CategoryRequest $request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $data['son'] = json_encode($data['son']);
-        $flag = Category::query()->create($data);
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $categoryService->create($request);
     }
 
     /**
+     * @param CategoryService $categoryService
      * @param CategoryRequest $request
      * @param int $id
      * @return ResponseInterface
@@ -67,19 +60,14 @@ class CategoryController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(CategoryRequest $request, int $id): ResponseInterface
+    public function update(CategoryService $categoryService, CategoryRequest $request, int $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $data['son'] = json_encode($data['son']);
-        $flag = Category::query()->where('id', $id)->update($data);
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $categoryService->update($request, $id);
     }
 
     /**
+     * @param CategoryService $categoryService
      * @param int $id
      * @return ResponseInterface
      * @RequestMapping(path="edit/{id}", methods="post")
@@ -88,19 +76,14 @@ class CategoryController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function edit(int $id): ResponseInterface
+    public function edit(CategoryService $categoryService, int $id): ResponseInterface
     {
-        $category = Category::query()
-            ->where('id', $id)
-            ->toArray();
-
-        $data = [
-            'data' => $category,
-        ];
-        return $this->success($data);
+        //交给service处理
+        return $categoryService->edit($id);
     }
 
     /**
+     * @param CategoryService $categoryService
      * @param int $id
      * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
@@ -109,21 +92,9 @@ class CategoryController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id): ResponseInterface
+    public function delete(CategoryService $categoryService, int $id): ResponseInterface
     {
-        //是否有子分类
-        if (Category::query()->where('son', $id)->first()) {
-            return $this->fail([], '存在子分类');
-        }
-        //分类是否有文章
-        $category = (Category::query()->select('value')->where('id', $id)->first())['value'];
-        if (Post::query()->where('menu', '"' . $category . '"')->first()) {
-            return $this->fail([], '分类存在文章');
-        }
-        $flag = Category::query()->where('id', $id)->delete();
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $categoryService->delete($id);
     }
 }

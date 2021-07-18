@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Model\Tag;
 use App\Request\TagRequest;
-use App\Resource\TagResource;
 use App\Services\TagService;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Controller;
@@ -32,10 +30,11 @@ class TagController extends AbstractController
     public function index(TagService $tagService): ResponseInterface
     {
         //交给service处理
-        return $this->success($tagService->index($this->request));
+        return $tagService->index($this->request);
     }
 
     /**
+     * @param TagService $tagService
      * @param TagRequest $request
      * @return ResponseInterface
      * @RequestMapping(path="create", methods="post")
@@ -51,6 +50,7 @@ class TagController extends AbstractController
     }
 
     /**
+     * @param TagService $tagService
      * @param TagRequest $request
      * @param int $id
      * @return ResponseInterface
@@ -60,18 +60,14 @@ class TagController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(TagRequest $request, int $id): ResponseInterface
+    public function update(TagService $tagService, TagRequest $request, int $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $flag = Tag::query()->where('id', $id)->update($data);
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $tagService->update($request, $id);
     }
 
     /**
+     * @param TagService $tagService
      * @param int $id
      * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
@@ -80,12 +76,9 @@ class TagController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(int $id): ResponseInterface
+    public function delete(TagService $tagService, int $id): ResponseInterface
     {
-        $flag = Tag::query()->where('id', $id)->delete();
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $tagService->delete($id);
     }
 }

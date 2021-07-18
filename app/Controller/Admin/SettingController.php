@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Model\Setting;
 use App\Request\SettingRequest;
-use App\Resource\SettingResource;
+use App\Services\SettingService;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
@@ -24,43 +23,31 @@ use Psr\Http\Message\ResponseInterface;
 class SettingController extends AbstractController
 {
     /**
+     * @param SettingService $settingService
      * @param string $id
      * @return ResponseInterface
-     * @RequestMapping(path="/admin/{id}", methods="get")
+     * @RequestMapping(path="/admin/{id}/index", methods="get")
      */
-    public function index(string $id): ResponseInterface
+    public function index(SettingService $settingService, string $id): ResponseInterface
     {
-        $permission = Setting::query()->where([
-            ['name', $id]
-        ])->get();
-
-        $data = [
-            'data' => SettingResource::collection($permission),
-        ];
-        return $this->success($data);
+        //交给service处理
+        return $settingService->index($id);
     }
 
     /**
+     * @param SettingService $settingService
      * @param SettingRequest $request
      * @param string $id
      * @return ResponseInterface
-     * @RequestMapping(path="/admin/{id}", methods="put")
+     * @RequestMapping(path="/admin/{id}/update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(SettingRequest $request, string $id): ResponseInterface
+    public function update(SettingService $settingService, SettingRequest $request, string $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $data['value'] = json_encode($data['value']);
-        $flag = Setting::query()->where('name', $id)->update([
-            'value' => $data['value']
-        ]);
-        if ($flag) {
-            return $this->success();
-        }
-        return $this->fail();
+        //交给service处理
+        return $settingService->update($request, $id);
     }
 }

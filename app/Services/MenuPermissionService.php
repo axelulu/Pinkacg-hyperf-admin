@@ -3,20 +3,20 @@
 
 namespace App\Services;
 
-use App\Filters\RoleFilter;
-use App\Model\AdminRole;
-use App\Resource\RoleResource;
-use Donjan\Casbin\Enforcer;
+
+use App\Filters\MenuFilter;
+use App\Model\AdminPermission;
+use App\Resource\MenuPermissionResource;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
 
-class RoleService extends Service
+class MenuPermissionService extends Service
 {
     /**
      * @Inject
-     * @var RoleFilter
+     * @var MenuFilter
      */
-    protected $roleFilter;
+    protected $menuFilter;
 
     /**
      * @param $request
@@ -24,20 +24,22 @@ class RoleService extends Service
      */
     public function index($request): ResponseInterface
     {
+        $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $role = AdminRole::query()
-            ->where($this->roleFilter->apply())
+        $menu = AdminPermission::query()
+            ->where($this->menuFilter->apply())
+            ->orderBy($orderBy, 'desc')
             ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $roles = $role->toArray();
+        $menus = $menu->toArray();
 
         return $this->success([
-            'pageSize' => $roles['per_page'],
-            'pageNo' => $roles['current_page'],
-            'totalCount' => $roles['total'],
-            'totalPage' => $roles['to'],
-            'data' => RoleResource::collection($role),
+            'pageSize' => $menus['per_page'],
+            'pageNo' => $menus['current_page'],
+            'totalCount' => $menus['total'],
+            'totalPage' => $menus['to'],
+            'data' => MenuPermissionResource::collection($menu),
         ]);
     }
 
@@ -49,7 +51,8 @@ class RoleService extends Service
     {
         // 验证
         $data = $request->validated();
-        $flag = (new RoleResource(AdminRole::query()->create($data)))->toResponse();
+        $data['method'] = json_encode($data['method']);
+        $flag = (new MenuPermissionResource(AdminPermission::query()->create($data)))->toResponse();
         if ($flag) {
             return $this->success();
         }
@@ -63,17 +66,10 @@ class RoleService extends Service
      */
     public function update($request, $id): ResponseInterface
     {
-        //判断权限
-        $rolePermission = $this->request->input('rolePermission');
-        if (isset($rolePermission)) {
-            Enforcer::deletePermissionsForUser('permission_' . $id);
-            foreach ($rolePermission as $k => $v) {
-                Enforcer::addPermissionForUser('permission_' . $id, '*', '*', $v);
-            }
-        }
         // 验证
         $data = $request->validated();
-        $flag = AdminRole::query()->where('id', $id)->update($data);
+        $data['method'] = json_encode($data['method']);
+        $flag = AdminPermission::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();
         }
@@ -86,11 +82,12 @@ class RoleService extends Service
      */
     public function delete($id): ResponseInterface
     {
-        // 判断是否存在用户角色
-        if (Enforcer::getUsersForRole((string)$id)) {
-            return $this->fail([], '角色存在用户！');
+        //存在子菜单
+        if (AdminPermission::query()->where('p_id', $id)) {
+            return $this->fail([], '存在子菜单');
         }
-        if (AdminRole::query()->where('id', $id)->delete()) {
+        //有用户选择此菜单
+        if (AdminPermission::query()->where('id', $id)->delete()) {
             return $this->success();
         }
         return $this->fail();
