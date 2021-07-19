@@ -232,8 +232,14 @@ class UserService extends Service
             return $this->fail([], '用户id错误');
         }
         // 更新用户头像
-        $data = $this->request->inputs(['name', 'desc'], ['', '']);
-        $flag = User::query()->where('id', $id)->update($data);
+        $avatar = $this->request->all();
+        var_dump($avatar);
+        // 转移头像文件
+        $avatar = self::transferFile($id, $avatar['avatar'], 'user_attachment');
+        var_dump($avatar);
+        $flag = User::query()->where('id', $id)->update([
+            'avatar' => $avatar
+        ]);
         if ($flag) {
             return $this->success();
         }

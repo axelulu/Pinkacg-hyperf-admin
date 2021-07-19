@@ -108,10 +108,10 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserAvatar(UserService $userService, UserRequest $userRequest, int $id, JWT $JWT): ResponseInterface
+    public function updateUserAvatar(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->updateUserAvatar($userRequest, $id, $JWT);
+        return $userService->updateUserAvatar($this->request, $id, $JWT);
     }
 
     /**
@@ -125,10 +125,10 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserInfo(UserService $userService, UserRequest $userRequest, int $id, JWT $JWT): ResponseInterface
+    public function updateUserInfo(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->updateUserInfo($userRequest, $id, $JWT);
+        return $userService->updateUserInfo($this->request, $id, $JWT);
     }
 
     /**
@@ -142,10 +142,10 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserEmail(UserService $userService, UserRequest $userRequest, int $id, JWT $JWT): ResponseInterface
+    public function updateUserEmail(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->updateUserEmail($userRequest, $id, $JWT);
+        return $userService->updateUserEmail($this->request, $id, $JWT);
     }
 
     /**
@@ -159,10 +159,10 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function sendUserMail(UserService $userService, UserRequest $userRequest, int $id, JWT $JWT): ResponseInterface
+    public function sendUserMail(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->sendUserMail($userRequest, $id, $JWT);
+        return $userService->sendUserMail($this->request, $id, $JWT);
     }
 
     /**
@@ -176,10 +176,10 @@ class UserController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserPassword(UserService $userService, UserRequest $userRequest, int $id, JWT $JWT): ResponseInterface
+    public function updateUserPassword(UserService $userService, int $id, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->updateUserPassword($userRequest, $id, $JWT);
+        return $userService->updateUserPassword($this->request, $id, $JWT);
     }
 
     /**

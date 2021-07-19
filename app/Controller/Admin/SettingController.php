@@ -26,12 +26,12 @@ class SettingController extends AbstractController
      * @param SettingService $settingService
      * @param string $id
      * @return ResponseInterface
-     * @RequestMapping(path="/admin/{id}/index", methods="get")
+     * @RequestMapping(path="/admin/site_{id}/index", methods="get")
      */
     public function index(SettingService $settingService, string $id): ResponseInterface
     {
         //交给service处理
-        return $settingService->index($id);
+        return $settingService->index('site_' . $id);
     }
 
     /**
@@ -39,7 +39,7 @@ class SettingController extends AbstractController
      * @param SettingRequest $request
      * @param string $id
      * @return ResponseInterface
-     * @RequestMapping(path="/admin/{id}/update", methods="put")
+     * @RequestMapping(path="/admin/site_{id}/update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
@@ -48,6 +48,6 @@ class SettingController extends AbstractController
     public function update(SettingService $settingService, SettingRequest $request, string $id): ResponseInterface
     {
         //交给service处理
-        return $settingService->update($request, $id);
+        return $settingService->update($request, 'site_' . $id);
     }
 }

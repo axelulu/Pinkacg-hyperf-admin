@@ -38,6 +38,7 @@ abstract class Service
     protected $response;
 
     /**
+     * @Inject
      * @var Filesystem
      */
     protected $filesystem;
@@ -77,7 +78,6 @@ abstract class Service
         //判断是否是JWT用户
         $user = $JWT->getParserData();
         $all_permission = $request->getParsedBody();
-        var_dump($all_permission);
         if (isset($all_permission['all_permission']) && $all_permission['all_permission'] === 'all_permission') {
             return true;
         }
@@ -115,7 +115,7 @@ abstract class Service
                 $file['user_id'] = $user_id;
             }
             $path = $cat_name . '/' . $file['user_id'] . '/' . $file['post_id'] . '/';
-            $oldData = Attachment::query()->select('cat', 'path', 'user_id', 'post_id', 'filename', 'type')->where('id', $file['id'])->first();
+            $oldData = Attachment::query()->select('cat', 'path', 'user_id', 'post_id', 'filename', 'type')->where('id', $file['id'])->first()->toArray();
             // 转移文件到其他目录
             try {
                 if ($this->filesystem->has('uploads/' . $oldData['path'] . $oldData['filename'] . '.' . $oldData['type'])) {

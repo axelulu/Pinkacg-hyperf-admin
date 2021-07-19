@@ -64,8 +64,6 @@ class PermissionMiddleware implements MiddlewareInterface
         //获取请求的路径
         $path = $this->request->path();
         //获取请求权限路径
-        var_dump($path);
-        var_dump(strpos($path, '/', strpos($path, '/')));
         $requestPermissionPath = substr($path, 0, strpos($path, '/', strpos($path, '/') + 1));
         $allPermission = AdminPermission::query()->select('id', 'method')->where('path', $requestPermissionPath)->get()->toArray();
         //获取请求方法

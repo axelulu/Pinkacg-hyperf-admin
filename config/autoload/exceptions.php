@@ -10,6 +10,7 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
 
+use App\Exception\Handler\FromValidateExceptionHandler;
 use App\Exception\Handler\JtwExceptionHandler;
 use Hyperf\Validation\ValidationExceptionHandler;
 
@@ -20,6 +21,8 @@ return [
             App\Exception\Handler\AppExceptionHandler::class,
             ValidationExceptionHandler::class,
             JtwExceptionHandler::class,
+            // 自定义的验证异常处理器
+            FromValidateExceptionHandler::class,
         ],
     ],
 ];
