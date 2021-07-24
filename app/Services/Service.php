@@ -73,15 +73,87 @@ abstract class Service
         return $this->response->json($res);
     }
 
-    public function isJWTUser($request, $JWT, $id): bool
+    /**
+     * @param $min
+     * @param $max
+     * @param $num
+     * @return array
+     */
+    public function uniqueRand($min, $max, $num): array
+    {
+        $count = 0;
+        $return = array();
+        while ($count < $num) {
+            $return[] = mt_rand($min, $max);
+            $return = array_flip(array_flip($return));
+            $count = count($return);
+        }
+        //打乱数组，重新赋予数组新的下标
+        shuffle($return);
+        return $return;
+    }
+
+    /**
+     * @param $request
+     * @param $serverID
+     * @param $id
+     * @return bool
+     */
+    public function isJWTUser($request, $serverID, $id): bool
     {
         //判断是否是JWT用户
-        $user = $JWT->getParserData();
-        $all_permission = $request->getParsedBody();
-        if (isset($all_permission['all_permission']) && $all_permission['all_permission'] === 'all_permission') {
+        $all_permission = $request->getAttribute('all_permission');
+        if (isset($all_permission) && $all_permission === 'all_permission') {
             return true;
         }
-        if ((!isset($all_permission['all_permission']) || $all_permission['all_permission'] !== 'all_permission') && $user['id'] !== $id) {
+        if ((!isset($all_permission) || $all_permission !== 'all_permission') && $serverID !== $id) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param $request
+     * @return array
+     */
+    public function getValidatedData($request): array
+    {
+        $data = $request->validated();
+        $exceptColumns = \Qiniu\json_decode($request->getAttribute('except_columns'));
+        foreach ($exceptColumns as $k => $v) {
+            unset($data[$v]);
+        }
+        return $data;
+    }
+
+    /**
+     * @param $data
+     * @param $request
+     * @return mixed
+     */
+    public function getDisplayColumnData($data, $request)
+    {
+        $exceptColumns = \Qiniu\json_decode($request->getAttribute('except_columns'));
+        foreach ($data as $kk => $vv) {
+            foreach ($exceptColumns as $k => $v) {
+                unset($data[$kk][$v]);
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * @param $id
+     * @param $role
+     * @return bool
+     */
+    public function setUserRole($id, $role): bool
+    {
+        if (!Enforcer::hasRoleForUser('roles_' . $id, $role)) {
+            Enforcer::deleteRolesForUser('roles_' . $id);
+            if (Enforcer::addRoleForUser('roles_' . $id, $role)) {
+                return true;
+            }
             return false;
         }
         return true;
@@ -133,5 +205,37 @@ abstract class Service
         } else {
             return $file;
         }
+    }
+
+    /**
+     * @param $name
+     * @return array|string|string[]|null
+     */
+    public function pluralize($name)
+    {
+        $rules = array(
+            '/move$/i' => 'moves',
+            '/foot$/i' => 'feet',
+            '/child$/i' => 'children',
+            '/human$/i' => 'humans',
+            '/man$/i' => 'men',
+            '/tooth$/i' => 'teeth',
+            '/person$/i' => 'people',
+            '/([m|l])ouse$/i' => '\1ice',
+            '/(x|ch|ss|sh|us|as|is|os)$/i' => '\1es',
+            '/([^aeiouy]|qu)y$/i' => '\1ies',
+            '/(?:([^f])fe|([lr])f)$/i' => '\1\2ves',
+            '/(shea|lea|loa|thie)f$/i' => '\1ves',
+            '/([ti])um$/i' => '\1a',
+            '/(tomat|potat|ech|her|vet)o$/i' => '\1oes',
+            '/(bu)s$/i' => '\1ses',
+            '/(ax|test)is$/i' => '\1es',
+            '/s$/' => 's',
+        );
+        foreach ($rules as $rule => $replacement) {
+            if (preg_match($rule, $name))
+                return preg_replace($rule, $replacement, $name);
+        }
+        return $name . 's';
     }
 }

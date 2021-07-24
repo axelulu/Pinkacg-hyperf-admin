@@ -6,7 +6,7 @@ namespace App\Controller\Admin;
 
 
 use App\Controller\AbstractController;
-use App\Request\UploadRequest;
+use App\Request\admin\UploadRequest;
 use App\Services\UploadService;
 use \League\Flysystem\Filesystem;
 use Psr\Http\Message\ResponseInterface;

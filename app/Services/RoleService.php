@@ -5,7 +5,7 @@ namespace App\Services;
 
 use App\Filters\RoleFilter;
 use App\Model\AdminRole;
-use App\Resource\RoleResource;
+use App\Resource\admin\RoleResource;
 use Donjan\Casbin\Enforcer;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
@@ -37,7 +37,7 @@ class RoleService extends Service
             'pageNo' => $roles['current_page'],
             'totalCount' => $roles['total'],
             'totalPage' => $roles['to'],
-            'data' => RoleResource::collection($role),
+            'data' => self::getDisplayColumnData(RoleResource::collection($role)->toArray(), $request),
         ]);
     }
 
@@ -47,9 +47,20 @@ class RoleService extends Service
      */
     public function create($request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $flag = (new RoleResource(AdminRole::query()->create($data)))->toResponse();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
+        //创建角色
+        $flag = AdminRole::query()->create($data);
+
+        //赋予权限
+        if (isset($data['rolePermission'])) {
+            Enforcer::deletePermissionsForUser('permission_' . $flag['id']);
+            foreach ($data['rolePermission'] as $k => $v) {
+                Enforcer::addPermissionForUser('permission_' . $flag['id'], '*', '*', $v);
+            }
+        }
+
         if ($flag) {
             return $this->success();
         }
@@ -63,16 +74,18 @@ class RoleService extends Service
      */
     public function update($request, $id): ResponseInterface
     {
-        //判断权限
-        $rolePermission = $this->request->input('rolePermission');
-        if (isset($rolePermission)) {
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
+        //赋予权限
+        if (isset($data['rolePermission'])) {
             Enforcer::deletePermissionsForUser('permission_' . $id);
-            foreach ($rolePermission as $k => $v) {
+            foreach ($data['rolePermission'] as $k => $v) {
                 Enforcer::addPermissionForUser('permission_' . $id, '*', '*', $v);
             }
+            unset($data['rolePermission']);
         }
-        // 验证
-        $data = $request->validated();
+
         $flag = AdminRole::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();

@@ -6,9 +6,14 @@ namespace App\Services;
 use App\Filters\PostFilter;
 use App\Model\Comment;
 use App\Model\Post;
-use App\Resource\PostResource;
+use App\Model\Tag;
+use App\Request\home\PostRequest;
+use App\Resource\admin\PostResource;
 use Hyperf\Di\Annotation\Inject;
+use Hyperf\Utils\Context;
+use Phper666\JWTAuth\JWT;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class PostService extends Service
 {
@@ -17,6 +22,12 @@ class PostService extends Service
      * @var PostFilter
      */
     protected $postFilter;
+
+    /**
+     * @Inject
+     * @var PostRequest
+     */
+    protected $homePostRequest;
 
     /**
      * @param $request
@@ -30,7 +41,7 @@ class PostService extends Service
 
         $permission = Post::query()
             ->where($this->postFilter->apply())
-            ->orderBy($orderBy, 'desc')
+            ->orderBy($orderBy, 'asc')
             ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
         $permissions = $permission->toArray();
 
@@ -39,7 +50,7 @@ class PostService extends Service
             'pageNo' => $permissions['current_page'],
             'totalCount' => $permissions['total'],
             'totalPage' => $permissions['to'],
-            'data' => PostResource::collection($permission),
+            'data' => self::getDisplayColumnData(PostResource::collection($permission)->toArray(), $request),
         ]);
     }
 
@@ -49,8 +60,22 @@ class PostService extends Service
      */
     public function create($request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
+        //创建文章标签
+        $tag = \Qiniu\json_decode($data['tag']);
+        foreach ($tag as $k => $v) {
+            if (Tag::query()->where('label', $v)->get()->count() === 0) {
+                Tag::query()->create([
+                    'label' => $v,
+                    'value' => $v,
+                    'status' => 1,
+                ]);
+            }
+        }
+
+        //创建文章
         $flag = Post::query()->create($data)->toArray();
 
         //转移文件
@@ -63,6 +88,8 @@ class PostService extends Service
         }
         unset($data['content_file']);
         $data['header_img'] = self::transferFile($flag['id'], $data['header_img'], 'post_attachment', $flag['author']);
+
+        //更新文章
         $flag = Post::query()->where('id', $flag['id'])->update($data);
         if ($flag) {
             return $this->success();
@@ -72,13 +99,20 @@ class PostService extends Service
 
     /**
      * @param $request
+     * @param JWT $JWT
      * @param $id
      * @return ResponseInterface
      */
-    public function update($request, $id): ResponseInterface
+    public function update($request, JWT $JWT, $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //判断是否是JWT用户
+        $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $postAuthorId)) {
+            return $this->fail([], '用户id错误');
+        }
+
+        //获取验证数据
+        $data = self::getValidatedData($request);
 
         //转移文件
         foreach ($data['content_file'] as $k => $v) {
@@ -90,6 +124,8 @@ class PostService extends Service
         }
         unset($data['content_file']);
         $data['header_img'] = self::transferFile($id, $data['header_img'], 'post_attachment', $data['author']);
+
+        //更新文章
         $flag = Post::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();
@@ -98,11 +134,19 @@ class PostService extends Service
     }
 
     /**
+     * @param $request
+     * @param $JWT
      * @param $id
      * @return ResponseInterface
      */
-    public function delete($id): ResponseInterface
+    public function delete($request, $JWT, $id): ResponseInterface
     {
+        //判断是否是JWT用户
+        $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $postAuthorId)) {
+            return $this->fail([], '用户id错误');
+        }
+
         //判断是否有评论
         if (Comment::query()->where('post_ID', $id)->first()) {
             return $this->fail([], '文章存在评论');

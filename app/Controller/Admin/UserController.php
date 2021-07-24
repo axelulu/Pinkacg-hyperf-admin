@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Request\UserRequest;
+use App\Request\admin\UserRequest;
 use App\Services\UserService;
 use Phper666\JWTAuth\JWT;
 use Psr\Http\Message\ResponseInterface;

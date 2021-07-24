@@ -21,7 +21,7 @@ class AdminPermission extends Model
      *
      * @var array
      */
-    protected $fillable = ['id', 'name', 'icon', 'path', 'url', 'method', 'p_id', 'hidden', 'is_menu', 'title', 'status', 'created_at', 'updated_at', 'deleted_at', 'sort'];
+    protected $fillable = ['id', 'name', 'icon', 'path', 'url', 'method', 'key', 'p_id', 'hidden', 'is_menu', 'title', 'status', 'created_at', 'updated_at', 'deleted_at', 'sort'];
     /**
      * The attributes that should be cast to native types.
      *

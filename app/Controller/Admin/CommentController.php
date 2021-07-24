@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Request\CommentRequest;
+use App\Request\admin\CommentRequest;
 use App\Services\CommentService;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
+use Phper666\JWTAuth\JWT;
 use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Psr\Http\Message\ResponseInterface;
@@ -51,6 +52,7 @@ class CommentController extends AbstractController
 
     /**
      * @param CommentService $commentService
+     * @param JWT $JWT
      * @param CommentRequest $request
      * @param int $id
      * @return ResponseInterface
@@ -60,14 +62,16 @@ class CommentController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(CommentService $commentService, CommentRequest $request, int $id): ResponseInterface
+    public function update(CommentService $commentService, JWT $JWT, CommentRequest $request, int $id): ResponseInterface
     {
         //交给service处理
-        return $commentService->update($request, $id);
+        return $commentService->update($request, $JWT, $id);
     }
 
     /**
      * @param CommentService $commentService
+     * @param JWT $JWT
+     * @param CommentRequest $request
      * @param int $id
      * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
@@ -76,9 +80,9 @@ class CommentController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(CommentService $commentService, int $id): ResponseInterface
+    public function delete(CommentService $commentService, JWT $JWT, CommentRequest $request, int $id): ResponseInterface
     {
         //交给service处理
-        return $commentService->delete($id);
+        return $commentService->delete($request, $JWT, $id);
     }
 }

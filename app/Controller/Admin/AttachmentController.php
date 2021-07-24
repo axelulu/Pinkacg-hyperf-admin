@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Request\AttachmentRequest;
+use App\Request\admin\AttachmentRequest;
 use App\Services\AttachmentService;
 use League\Flysystem\Filesystem;
 use Hyperf\HttpServer\Annotation\Controller;

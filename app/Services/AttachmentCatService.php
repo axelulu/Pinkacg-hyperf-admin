@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Filters\AttachmentCatFilter;
 use App\Model\AttachmentCat;
-use App\Resource\AttachmentCatResource;
+use App\Resource\admin\AttachmentCatResource;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
 
@@ -39,7 +39,7 @@ class AttachmentCatService extends Service
             'pageNo' => $attachmentCats['current_page'],
             'totalCount' => $attachmentCats['total'],
             'totalPage' => $attachmentCats['to'],
-            'data' => AttachmentCatResource::collection($attachmentCat),
+            'data' => self::getDisplayColumnData(AttachmentCatResource::collection($attachmentCat)->toArray(), $request),
         ]);
     }
 
@@ -49,8 +49,9 @@ class AttachmentCatService extends Service
      */
     public function create($request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $flag = (new AttachmentCatResource(AttachmentCat::query()->create($data)))->toResponse();
         if ($flag) {
             return $this->success();
@@ -65,8 +66,9 @@ class AttachmentCatService extends Service
      */
     public function update($request, $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $flag = AttachmentCat::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();

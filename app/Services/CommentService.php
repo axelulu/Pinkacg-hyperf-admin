@@ -6,7 +6,8 @@ namespace App\Services;
 
 use App\Filters\CommentFilter;
 use App\Model\Comment;
-use App\Resource\CommentResource;
+use App\Model\Post;
+use App\Resource\admin\CommentResource;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
 
@@ -30,7 +31,7 @@ class CommentService extends Service
 
         $comment = Comment::query()
             ->where($this->commentFilter->apply())
-            ->orderBy($orderBy, 'desc')
+            ->orderBy($orderBy, 'asc')
             ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
         $comments = $comment->toArray();
 
@@ -39,7 +40,7 @@ class CommentService extends Service
             'pageNo' => $comments['current_page'],
             'totalCount' => $comments['total'],
             'totalPage' => $comments['to'],
-            'data' => CommentResource::collection($comment),
+            'data' => self::getDisplayColumnData(CommentResource::collection($comment)->toArray(), $request),
         ]);
     }
 
@@ -49,8 +50,9 @@ class CommentService extends Service
      */
     public function create($request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $flag = (new CommentResource(Comment::query()->create($data)))->toResponse();
         if ($flag) {
             return $this->success();
@@ -60,13 +62,21 @@ class CommentService extends Service
 
     /**
      * @param $request
+     * @param $JWT
      * @param $id
      * @return ResponseInterface
      */
-    public function update($request, $id): ResponseInterface
+    public function update($request, $JWT, $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //判断是否是JWT用户
+        $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $postAuthorId)) {
+            return $this->fail([], '用户id错误');
+        }
+
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $flag = Comment::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();
@@ -75,11 +85,19 @@ class CommentService extends Service
     }
 
     /**
+     * @param $request
+     * @param $JWT
      * @param $id
      * @return ResponseInterface
      */
-    public function delete($id): ResponseInterface
+    public function delete($request, $JWT, $id): ResponseInterface
     {
+        //判断是否是JWT用户
+        $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $postAuthorId)) {
+            return $this->fail([], '用户id错误');
+        }
+
         $flag = Comment::query()->where('id', $id)->delete();
         if ($flag) {
             return $this->success();

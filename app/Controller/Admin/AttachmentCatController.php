@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Request\AttachmentCatRequest;
+use App\Request\admin\AttachmentCatRequest;
 use App\Services\AttachmentCatService;
 use Hyperf\HttpServer\Contract\ResponseInterface;
 use Hyperf\HttpServer\Annotation\Controller;

@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Filters\TagFilter;
 use App\Model\Tag;
-use App\Resource\TagResource;
+use App\Resource\admin\TagResource;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
 
@@ -30,7 +30,7 @@ class TagService extends Service
 
         $tag = Tag::query()
             ->where($this->tagFilter->apply())
-            ->orderBy($orderBy, 'desc')
+            ->orderBy($orderBy, 'asc')
             ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
         $tags = $tag->toArray();
 
@@ -39,7 +39,7 @@ class TagService extends Service
             'pageNo' => $tags['current_page'],
             'totalCount' => $tags['total'],
             'totalPage' => $tags['to'],
-            'data' => TagResource::collection($tag),
+            'data' => self::getDisplayColumnData(TagResource::collection($tag)->toArray(), $request),
         ]);
     }
 
@@ -49,8 +49,9 @@ class TagService extends Service
      */
     public function create($request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $flag = (new TagResource(Tag::query()->create($data)))->toResponse();
         if ($flag) {
             return $this->success();
@@ -65,8 +66,9 @@ class TagService extends Service
      */
     public function update($request, $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $flag = Tag::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();

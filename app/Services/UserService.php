@@ -10,8 +10,8 @@ use App\Model\AdminRole;
 use App\Model\Comment;
 use App\Model\Post;
 use App\Model\User;
-use App\Resource\NavResource;
-use App\Resource\UserResource;
+use App\Resource\admin\NavResource;
+use App\Resource\admin\UserResource;
 use Donjan\Casbin\Enforcer;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Utils\ApplicationContext;
@@ -34,7 +34,7 @@ class UserService extends Service
 
         $user = User::query()
             ->where($this->userFilter->apply())
-            ->orderBy($orderBy, 'desc')
+            ->orderBy($orderBy, 'asc')
             ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
         $users = $user->toArray();
 
@@ -43,7 +43,7 @@ class UserService extends Service
             'pageNo' => $users['current_page'],
             'totalCount' => $users['total'],
             'totalPage' => $users['to'],
-            'data' => UserResource::collection($user),
+            'data' => self::getDisplayColumnData(UserResource::collection($user)->toArray(), $request),
         ]);
     }
 
@@ -151,8 +151,9 @@ class UserService extends Service
      */
     public function create($request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $data['password'] = $this->passwordHash($data['password']);
         if (User::query()->where('email', $data['email'])->first()) {
             return $this->fail([], '邮箱已存在');
@@ -194,11 +195,13 @@ class UserService extends Service
     public function update($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
-        if (!self::isJWTUser($request, $JWT, $id)) {
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
             return $this->fail([], '用户id错误');
         }
-        // 验证
-        $data = $request->validated();
+
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $data['password'] = $this->passwordHash($data['password']);
 
         // 转移头像文件
@@ -206,12 +209,12 @@ class UserService extends Service
         // 转移背景文件
         $data['background'] = self::transferFile($id, $data['background'], 'user_attachment');
 
-        //赋予权限
-        if (!Enforcer::hasRoleForUser('roles_' . $id, $data['user_role'])) {
-            Enforcer::deleteRolesForUser('roles_' . $id);
-            Enforcer::addRoleForUser('roles_' . $id, $data['user_role']);
+        //赋予角色
+        if (!self::setUserRole($id, $data['user_role'])) {
+            return $this->fail([], '赋予角色失败');
         }
         unset($data['user_role']);
+
         $flag = User::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();
@@ -228,15 +231,14 @@ class UserService extends Service
     public function updateUserAvatar($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
-        if (!self::isJWTUser($request, $JWT, $id)) {
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
             return $this->fail([], '用户id错误');
         }
+
         // 更新用户头像
         $avatar = $this->request->all();
-        var_dump($avatar);
         // 转移头像文件
         $avatar = self::transferFile($id, $avatar['avatar'], 'user_attachment');
-        var_dump($avatar);
         $flag = User::query()->where('id', $id)->update([
             'avatar' => $avatar
         ]);
@@ -255,9 +257,10 @@ class UserService extends Service
     public function updateUserInfo($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
-        if (!self::isJWTUser($request, $JWT, $id)) {
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
             return $this->fail([], '用户id错误');
         }
+
         // 更新用户信息
         $data = $this->request->inputs(['name', 'desc'], ['', '']);
         $flag = User::query()->where('id', $id)->update($data);
@@ -276,9 +279,10 @@ class UserService extends Service
     public function updateUserEmail($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
-        if (!self::isJWTUser($request, $JWT, $id)) {
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
             return $this->fail([], '用户id错误');
         }
+
         // 更新用户邮件
         $data = $this->request->inputs(['myConfirm', 'email'], ['', '']);
         //初始化
@@ -303,9 +307,10 @@ class UserService extends Service
     public function sendUserMail($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
-        if (!self::isJWTUser($request, $JWT, $id)) {
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
             return $this->fail([], '用户id错误');
         }
+
         // 发送用户邮件
         $email = $this->request->input('email', '');
         if (!empty($email)) {
@@ -331,9 +336,10 @@ class UserService extends Service
     public function updateUserPassword($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
-        if (!self::isJWTUser($request, $JWT, $id)) {
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
             return $this->fail([], '用户id错误');
         }
+
         // 更新用户密码
         $data = $this->request->inputs(['password', 'newPassword', 'confirmPassword'], ['', '', '']);
         if (empty($data['password']) || empty($data['newPassword']) || empty($data['confirmPassword'])) {
@@ -360,9 +366,10 @@ class UserService extends Service
     public function delete($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
-        if (!self::isJWTUser($request, $JWT, $id)) {
+        if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
             return $this->fail([], '用户id错误');
         }
+
         //判断用户存在文章
         if (Post::query()->where('author', $id)->first()) {
             return $this->fail([], '用户存在文章');

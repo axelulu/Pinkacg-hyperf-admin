@@ -17,6 +17,8 @@
         "hyperf/cache": "~2.1.0",
         "hyperf/command": "~2.1.0",
         "hyperf/config": "~2.1.0",
+        "hyperf/contract": "~2.1.0",
+        "hyperf/crontab": "~2.1.14",
         "hyperf/database": "~2.1.0",
         "hyperf/db-connection": "^2.1",
         "hyperf/filesystem": "^2.1",

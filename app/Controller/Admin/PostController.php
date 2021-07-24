@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
-use App\Request\PostRequest;
+use App\Request\admin\PostRequest;
 use App\Services\PostService;
+use Phper666\JWTAuth\JWT;
 use Psr\Http\Message\ResponseInterface;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Middleware;
@@ -51,6 +52,7 @@ class PostController extends AbstractController
 
     /**
      * @param PostService $postService
+     * @param JWT $JWT
      * @param PostRequest $postRequest
      * @param int $id
      * @return ResponseInterface
@@ -60,14 +62,15 @@ class PostController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(PostService $postService, PostRequest $postRequest, int $id): ResponseInterface
+    public function update(PostService $postService, JWT $JWT, PostRequest $postRequest, int $id): ResponseInterface
     {
         //交给service处理
-        return $postService->update($postRequest, $id);
+        return $postService->update($postRequest, $JWT, $id);
     }
 
     /**
      * @param PostService $postService
+     * @param JWT $JWT
      * @param int $id
      * @return ResponseInterface
      * @RequestMapping(path="delete/{id}", methods="delete")
@@ -76,9 +79,9 @@ class PostController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(PostService $postService, int $id): ResponseInterface
+    public function delete(PostService $postService, JWT $JWT, int $id): ResponseInterface
     {
         //交给service处理
-        return $postService->delete($id);
+        return $postService->delete($this->request, $JWT, $id);
     }
 }

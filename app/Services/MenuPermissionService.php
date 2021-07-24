@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Filters\MenuFilter;
 use App\Model\AdminPermission;
-use App\Resource\MenuPermissionResource;
+use App\Resource\admin\MenuPermissionResource;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
 
@@ -30,7 +30,7 @@ class MenuPermissionService extends Service
 
         $menu = AdminPermission::query()
             ->where($this->menuFilter->apply())
-            ->orderBy($orderBy, 'desc')
+            ->orderBy($orderBy, 'asc')
             ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
         $menus = $menu->toArray();
 
@@ -39,7 +39,7 @@ class MenuPermissionService extends Service
             'pageNo' => $menus['current_page'],
             'totalCount' => $menus['total'],
             'totalPage' => $menus['to'],
-            'data' => MenuPermissionResource::collection($menu),
+            'data' => self::getDisplayColumnData(MenuPermissionResource::collection($menu)->toArray(), $request),
         ]);
     }
 
@@ -49,10 +49,10 @@ class MenuPermissionService extends Service
      */
     public function create($request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $data['method'] = json_encode($data['method']);
-        $flag = (new MenuPermissionResource(AdminPermission::query()->create($data)))->toResponse();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
+        $flag = AdminPermission::query()->create($data);
         if ($flag) {
             return $this->success();
         }
@@ -66,9 +66,9 @@ class MenuPermissionService extends Service
      */
     public function update($request, $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
-        $data['method'] = json_encode($data['method']);
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $flag = AdminPermission::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();

@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Filters\AttachmentFilter;
 use App\Model\Attachment;
-use App\Resource\AttachmentResource;
+use App\Resource\admin\AttachmentResource;
 use Hyperf\Di\Annotation\Inject;
 use League\Flysystem\FileExistsException;
 use League\Flysystem\FileNotFoundException;
@@ -37,7 +37,7 @@ class AttachmentService extends Service
             'pageNo' => $attachments['current_page'],
             'totalCount' => $attachments['total'],
             'totalPage' => $attachments['to'],
-            'data' => AttachmentResource::collection($attachment),
+            'data' => self::getDisplayColumnData(AttachmentResource::collection($attachment)->toArray(), $request),
         ]);
     }
 
@@ -48,8 +48,9 @@ class AttachmentService extends Service
      */
     public function create($request, $filesystem): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $cat_name = $data['cat'];
         try {
             $filesystem->copy('uploads/' . $data['path'] . '/' . $data['filename'] . '.' . $data['type'],
@@ -74,8 +75,9 @@ class AttachmentService extends Service
      */
     public function update($request, $filesystem, $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $cat_name = $data['cat'];
         $oldData = Attachment::query()->select('cat', 'user_id', 'post_id', 'filename', 'type')->where('id', $data['id'])->first();
         // 转移文件到其他目录

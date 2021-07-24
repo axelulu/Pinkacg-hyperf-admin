@@ -7,6 +7,7 @@ namespace App\Middleware;
 use App\Model\AdminPermission;
 use Donjan\Casbin\Enforcer;
 use Hyperf\DbConnection\Db;
+use Hyperf\Utils\Context;
 use Phper666\JWTAuth\JWT;
 use Psr\Container\ContainerInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
@@ -65,7 +66,8 @@ class PermissionMiddleware implements MiddlewareInterface
         $path = $this->request->path();
         //获取请求权限路径
         $requestPermissionPath = substr($path, 0, strpos($path, '/', strpos($path, '/') + 1));
-        $allPermission = AdminPermission::query()->select('id', 'method')->where('path', $requestPermissionPath)->get()->toArray();
+        $allPermission = AdminPermission::query()->select('id', 'method', 'key')->where('path', $requestPermissionPath)->get()->toArray();
+        var_dump($requestPermissionPath);
         //获取请求方法
         $requestMethod = $this->request->getMethod();
 
@@ -79,10 +81,7 @@ class PermissionMiddleware implements MiddlewareInterface
             $userPermission = Db::table('casbin_rules')->where(['v3' => $adminPermission['id'], 'ptype' => 'p'])->get();
             foreach ($userPermission as $k => $v) {
                 if (Db::table('casbin_rules')->where(['v0' => 'roles_' . $user['id'], 'v1' => substr($v->v0, 11, 1)])->get()->count()) {
-                    $parsedData = $request->getParsedBody();
-                    $request = $request->withParsedBody(array_merge($parsedData, [
-                        'all_permission' => 'all_permission'
-                    ]));
+                    $request = $request->withAttribute('all_permission', 'all_permission');
                     return $handler->handle($request);
                 }
             }
@@ -92,8 +91,13 @@ class PermissionMiddleware implements MiddlewareInterface
         foreach ($allPermission as $k => $v) {
             if (in_array($requestMethod, json_decode($allPermission[$k]['method']))) {
                 $userPermission = Db::table('casbin_rules')->where(['v3' => $v['id'], 'ptype' => 'p'])->get();
-                foreach ($userPermission as $k => $v) {
-                    if (Db::table('casbin_rules')->where(['v0' => 'roles_' . $user['id'], 'v1' => substr($v->v0, 11, 1)])->get()->count()) {
+                foreach ($userPermission as $kk => $vv) {
+                    if (Db::table('casbin_rules')->where(['v0' => 'roles_' . $user['id'], 'v1' => substr($vv->v0, 11, 1)])->get()->count()) {
+//                        $parsedData = $request->getParsedBody();
+//                        $request = $request->withParsedBody(array_merge($parsedData, [
+//                            'except_columns' => $allPermission[$k]['key']
+//                        ]));
+                        $request = $request->withAttribute('except_columns', $allPermission[$k]['key']);
                         return $handler->handle($request);
                     }
                 }

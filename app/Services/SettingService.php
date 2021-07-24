@@ -4,7 +4,7 @@
 namespace App\Services;
 
 use App\Model\Setting;
-use App\Resource\SettingResource;
+use App\Resource\admin\SettingResource;
 use Psr\Http\Message\ResponseInterface;
 
 class SettingService extends Service

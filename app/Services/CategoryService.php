@@ -7,7 +7,7 @@ namespace App\Services;
 use App\Filters\CategoryFilter;
 use App\Model\Category;
 use App\Model\Post;
-use App\Resource\CategoryResource;
+use App\Resource\admin\CategoryResource;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
 
@@ -40,7 +40,7 @@ class CategoryService extends Service
             'pageNo' => $categorys['current_page'],
             'totalCount' => $categorys['total'],
             'totalPage' => $categorys['to'],
-            'data' => CategoryResource::collection($category),
+            'data' => self::getDisplayColumnData(CategoryResource::collection($category)->toArray(), $request),
         ]);
     }
 
@@ -50,8 +50,9 @@ class CategoryService extends Service
      */
     public function create($request): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $data['son'] = json_encode($data['son']);
         $flag = Category::query()->create($data);
         if ($flag) {
@@ -67,30 +68,15 @@ class CategoryService extends Service
      */
     public function update($request, $id): ResponseInterface
     {
-        // 验证
-        $data = $request->validated();
+        //获取验证数据
+        $data = self::getValidatedData($request);
+
         $data['son'] = json_encode($data['son']);
         $flag = Category::query()->where('id', $id)->update($data);
         if ($flag) {
             return $this->success();
         }
         return $this->fail();
-    }
-
-    /**
-     * @param $id
-     * @return ResponseInterface
-     */
-    public function edit($id): ResponseInterface
-    {
-        $category = Category::query()
-            ->where('id', $id)
-            ->toArray();
-
-        $data = [
-            'data' => $category,
-        ];
-        return $this->success($data);
     }
 
     /**
