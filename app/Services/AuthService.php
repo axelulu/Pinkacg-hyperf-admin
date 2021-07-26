@@ -86,8 +86,7 @@ class AuthService extends Service
                 //获取角色id
                 $user_role = Setting::query()->select('value')->where('name', 'site_meta')->get()->toArray();
                 var_dump(\Qiniu\json_decode($user_role[0]['value']));
-                $user_role = \Qiniu\json_decode($user_role[0]['value'])->question_role;
-                var_dump($user_role);
+                $user_role = \Qiniu\json_decode($user_role[0]['value'])->register_role;
                 //赋予角色
                 if (!self::setUserRole($flag['id'], $user_role)) {
                     return $this->fail([], '赋予角色失败');

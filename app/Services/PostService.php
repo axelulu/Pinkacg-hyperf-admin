@@ -75,6 +75,11 @@ class PostService extends Service
     {
         //获取验证数据
         $data = self::getValidatedData($request);
+        $data['tag'] = json_encode($data['tag']);
+        $data['menu'] = json_encode($data['menu']);
+        $data['download'] = json_encode($data['download']);
+        $data['music'] = json_encode($data['music']);
+        $data['video'] = json_encode($data['video']);
         if ($request->getAttribute('all_permission') === 'all_permission') {
             $data['status'] = 'publish';
         } else {
