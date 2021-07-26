@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\AbstractController;
+use App\Model\Category;
 use App\Request\admin\PostRequest;
 use App\Services\PostService;
 use Phper666\JWTAuth\JWT;

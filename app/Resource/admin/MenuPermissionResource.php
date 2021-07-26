@@ -28,7 +28,7 @@ class MenuPermissionResource extends JsonResource
                 'p_id' => (int) $this->p_id,
                 'is_menu' => (int) $this->is_menu ? true : false,
                 'sort' => (int) $this->sort,
-                'children' => MenuPermissionResource::collection(AdminPermission::query()->where('p_id', $this->id)->get()),
+                'children' => MenuPermissionResource::collection(AdminPermission::query()->where('p_id', $this->id)->orderBy('sort', 'asc')->get()),
                 'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
             ];
         } else {

@@ -24,7 +24,7 @@ class MenuPermissionService extends Service
      */
     public function index($request): ResponseInterface
     {
-        $orderBy = $request->input('orderBy', 'id');
+        $orderBy = $request->input('orderBy', 'sort');
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 

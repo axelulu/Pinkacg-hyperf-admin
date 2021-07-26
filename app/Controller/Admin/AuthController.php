@@ -32,6 +32,16 @@ class AuthController extends AbstractController
 
     /**
      * @param AuthService $authService
+     * @return ResponseInterface
+     */
+    public function register(AuthService $authService): ResponseInterface
+    {
+        //交给service处理
+        return $authService->register($this->request);
+    }
+
+    /**
+     * @param AuthService $authService
      * @param JWT $JWT
      * @return ResponseInterface
      * @Middleware(JWTAuthMiddleware::class)

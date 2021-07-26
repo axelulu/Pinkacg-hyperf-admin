@@ -146,7 +146,7 @@ class QuestionService extends Service
         if ($grade >= 60) {
             //获取角色id
             $user_role = Setting::query()->select('value')->where('name', 'site_meta')->get()->toArray();
-            $user_role = \Qiniu\json_decode($user_role[0]['value'])['question_role'];
+            $user_role = \Qiniu\json_decode($user_role[0]['value'])->question_role;
             //赋予角色
             if (!self::setUserRole($userId, $user_role)) {
                 return $this->fail([], '赋予角色失败');

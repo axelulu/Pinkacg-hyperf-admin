@@ -4,6 +4,7 @@
 namespace App\Services;
 
 use App\Filters\PostFilter;
+use App\Model\Category;
 use App\Model\Comment;
 use App\Model\Post;
 use App\Model\Tag;
@@ -38,11 +39,23 @@ class PostService extends Service
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
-
-        $permission = Post::query()
-            ->where($this->postFilter->apply())
-            ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+        if ($menu = $request->input('menu', '')) {
+            $menu = (Category::query()->select('id')->where('value', $menu)->get())[0]['id'];
+            $permission = Post::query()
+                //菜单需要转换为id，单独判断
+                ->where('menu', 'like', '%[' . $menu . ',%')
+                ->orWhere('menu', 'like', '%,' . $menu . ']%')
+                ->orWhere('menu', 'like', ',%,' . $menu . ',%')
+                ->where($this->postFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+        } else {
+            $permission = Post::query()
+                //菜单需要转换为id，单独判断
+                ->where($this->postFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+        }
         $permissions = $permission->toArray();
 
         return $this->success([
@@ -62,6 +75,11 @@ class PostService extends Service
     {
         //获取验证数据
         $data = self::getValidatedData($request);
+        if ($request->getAttribute('all_permission') === 'all_permission') {
+            $data['status'] = 'publish';
+        } else {
+            $data['status'] = 'draft';
+        }
 
         //创建文章标签
         $tag = \Qiniu\json_decode($data['tag']);

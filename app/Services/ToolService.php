@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Model\Category;
 use Hyperf\Database\Schema\Schema;
 use Psr\Http\Message\ResponseInterface;
 

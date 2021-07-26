@@ -4,6 +4,9 @@
 namespace App\Services;
 
 use App\Model\AdminRole;
+use App\Model\Comment;
+use App\Model\Post;
+use App\Model\Setting;
 use App\Model\User;
 use Donjan\Casbin\Enforcer;
 use Psr\Http\Message\ResponseInterface;
@@ -26,14 +29,17 @@ class AuthService extends Service
 
             //获取角色信息
             $role_meta = AdminRole::query()->where('id', $role_id)->first()->toArray();
-            var_dump($role_meta);
-            var_dump($permission);
             $userData = [
                 'id' => $user->id,
                 'username' => $username,
                 'email' => $user->email,
                 'name' => $user->name,
+                'desc' => $user->desc,
+                'credit' => $user->credit,
                 'avatar' => $user->avatar,
+                'answertest' => $user->answertest,
+                'post_num' => Post::query()->where('id', $user->id)->count(),
+                'comment_num' => Comment::query()->where('user_id', $user->id)->count(),
                 'telephone' => $user->telephone,
                 'ip' => $user->ip,
                 'created_id' => $user->created_id,
@@ -59,6 +65,37 @@ class AuthService extends Service
             return $this->success($data);
         }
         return $this->fail([], '登陆失败');
+    }
+
+    /**
+     * @param $request
+     * @return ResponseInterface
+     */
+    public function register($request): ResponseInterface
+    {
+        $data = $request->all();
+        if (isset($data['username']) && isset($data['email']) && isset($data['password'])) {
+            $flag = User::query()->create([
+                'name' => $data['username'],
+                'username' => $data['username'],
+                'email' => $data['email'],
+                'check' => 1,
+                'password' => $this->passwordHash($data['password'])
+            ])->toArray();
+            if ($flag) {
+                //获取角色id
+                $user_role = Setting::query()->select('value')->where('name', 'site_meta')->get()->toArray();
+                var_dump(\Qiniu\json_decode($user_role[0]['value']));
+                $user_role = \Qiniu\json_decode($user_role[0]['value'])->question_role;
+                var_dump($user_role);
+                //赋予角色
+                if (!self::setUserRole($flag['id'], $user_role)) {
+                    return $this->fail([], '赋予角色失败');
+                }
+                return $this->success([], '注册成功');
+            }
+        }
+        return $this->fail([], '注册失败');
     }
 
     /**

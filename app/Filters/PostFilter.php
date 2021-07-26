@@ -10,7 +10,6 @@ class PostFilter extends Filter
         'title' => ['like', '%'],
         'status' => ['like', ''],
         'type' => ['like', ''],
-        'author' => ['like', ''],
-        'menu' => ['like', '%']
+        'author' => ['like', '']
     ];
 }
