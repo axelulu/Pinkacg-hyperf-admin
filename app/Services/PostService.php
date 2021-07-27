@@ -95,13 +95,15 @@ class PostService extends Service
         //创建文章标签
         $tag = \Qiniu\json_decode($data['tag']);
         try {
-            foreach ($tag as $k => $v) {
-                if (Tag::query()->where('label', $v)->get()->count() === 0) {
-                    Tag::query()->create([
-                        'label' => $v,
-                        'value' => $v,
-                        'status' => 1,
-                    ]);
+            if (is_array($tag)) {
+                foreach ($tag as $k => $v) {
+                    if (Tag::query()->where('label', $v)->get()->count() === 0) {
+                        Tag::query()->create([
+                            'label' => $v,
+                            'value' => $v,
+                            'status' => 1,
+                        ]);
+                    }
                 }
             }
 
@@ -109,11 +111,13 @@ class PostService extends Service
             $flag = Post::query()->create($data)->toArray();
 
             //转移文件
-            foreach ($data['content_file'] as $k => $v) {
-                if ($v['filename']) {
-                    $data['content_file'][$k] = self::transferFile($flag['id'], $v, 'post_attachment', $data['author']);
-                    $path[$k] = $data['content_file'][$k];
-                    $data['content'] = preg_replace("/<[img|IMG].*?src=[\'|\"](.*?)\/swap\/" . $v['filename'] . ".*?[\'|\"].*?[\/]?>/", '<img src="${1}/' . $path[$k] . '${2}" style="max-width:100%">', $data['content']);
+            if (is_array($data['content_file'])) {
+                foreach ($data['content_file'] as $k => $v) {
+                    if ($v['filename']) {
+                        $data['content_file'][$k] = self::transferFile($flag['id'], $v, 'post_attachment', $data['author']);
+                        $path[$k] = $data['content_file'][$k];
+                        $data['content'] = preg_replace("/<[img|IMG].*?src=[\'|\"](.*?)\/swap\/" . $v['filename'] . ".*?[\'|\"].*?[\/]?>/", '<img src="${1}/' . $path[$k] . '${2}" style="max-width:100%">', $data['content']);
+                    }
                 }
             }
             unset($data['content_file']);
@@ -152,14 +156,16 @@ class PostService extends Service
             $data['music'] = !isNull($data['music']) ? json_encode($data['music']) : '[]';
             $data['video'] = !isNull($data['video']) ? json_encode($data['video']) : '[]';
             //转移文件
-            foreach ($data['content_file'] as $k => $v) {
-                if ($v['filename']) {
-                    $data['content_file'][$k] = self::transferFile($id, $v, 'post_attachment', $data['author']);
-                    $path[$k] = $data['content_file'][$k];
-                    $header_img[$k] = $data['content_file'][$k];
-                    $data['content'] = preg_replace("/<[img|IMG].*?src=[\'|\"](.*?)\/swap\/" . $v['filename'] . ".*?[\'|\"].*?[\/]?>/", '<img src="${1}/' . $path[$k] . '${2}" style="max-width:100%">', $data['content']);
-                } else {
-                    $header_img[$k] = $v['url'];
+            if (is_array($data['content_file'])) {
+                foreach ($data['content_file'] as $k => $v) {
+                    if ($v['filename']) {
+                        $data['content_file'][$k] = self::transferFile($id, $v, 'post_attachment', $data['author']);
+                        $path[$k] = $data['content_file'][$k];
+                        $header_img[$k] = $data['content_file'][$k];
+                        $data['content'] = preg_replace("/<[img|IMG].*?src=[\'|\"](.*?)\/swap\/" . $v['filename'] . ".*?[\'|\"].*?[\/]?>/", '<img src="${1}/' . $path[$k] . '${2}" style="max-width:100%">', $data['content']);
+                    } else {
+                        $header_img[$k] = $v['url'];
+                    }
                 }
             }
             unset($data['content_file']);

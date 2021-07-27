@@ -155,7 +155,8 @@ class UserService extends Service
                     $permissions[$k] = $permission_item;
                 }
             }
-            $data = NavResource::collection(AdminPermission::query()->where(['p_id' => 0, 'is_menu' => 1])->orderBy('sort', 'asc')->get());
+            $data = NavResource::collection(AdminPermission::query()->where(['p_id' => 0, 'is_menu' => 1])->orderBy('sort', 'asc')->get())->toArray();
+
             if (is_array($data)) {
                 foreach ($data as $k => $v) {
                     array_push($permissions, $v);

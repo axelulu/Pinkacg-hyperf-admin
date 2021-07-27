@@ -71,11 +71,13 @@ class PostResource extends JsonResource
     {
         $download = json_decode($download);
         $newDownload = [];
-        foreach ($download as $k => $v) {
-            $newDownload[$k] = [
-                'name' => $v->name,
-                'credit' => $v->credit,
-            ];
+        if (is_array($download)) {
+            foreach ($download as $k => $v) {
+                $newDownload[$k] = [
+                    'name' => $v->name,
+                    'credit' => $v->credit,
+                ];
+            }
         }
         try {
             //未登录
@@ -95,8 +97,10 @@ class PostResource extends JsonResource
                     'post_id' => $postId
                 ])->get()->toArray();
                 if (count($orders) > 0) {
-                    foreach ($orders as $kk => $vv) {
-                        $newDownload[$vv['download_key']] = $download[$vv['download_key']];
+                    if (is_array($orders)) {
+                        foreach ($orders as $kk => $vv) {
+                            $newDownload[$vv['download_key']] = $download[$vv['download_key']];
+                        }
                     }
                 }
             }
@@ -113,8 +117,10 @@ class PostResource extends JsonResource
     private function getMenuMeta($menu): array
     {
         $values = [];
-        foreach(json_decode($menu) as $index => $value) {
-            array_push($values, Category::query()->select('label', 'value')->where('id', $value)->first()->toArray());
+        if (is_array(json_decode($menu))) {
+            foreach (json_decode($menu) as $index => $value) {
+                array_push($values, Category::query()->select('label', 'value')->where('id', $value)->first()->toArray());
+            }
         }
         return $values;
     }
