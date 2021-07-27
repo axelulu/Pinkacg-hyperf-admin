@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Exception\RequestException;
 use App\Filters\CategoryFilter;
 use App\Model\Category;
 use App\Model\Post;
@@ -29,18 +30,25 @@ class CategoryService extends Service
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $category = Category::query()
-            ->where($this->categoryFilter->apply())
-            ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $categorys = $category->toArray();
+        //获取数据
+        try {
+            $category = Category::query()
+                ->where($this->categoryFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            $categorys = $category->toArray();
+            $data = self::getDisplayColumnData(CategoryResource::collection($category)->toArray(), $request);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
+        //返回结果
         return $this->success([
             'pageSize' => $categorys['per_page'],
             'pageNo' => $categorys['current_page'],
             'totalCount' => $categorys['total'],
             'totalPage' => $categorys['to'],
-            'data' => self::getDisplayColumnData(CategoryResource::collection($category)->toArray(), $request),
+            'data' => $data,
         ]);
     }
 
@@ -52,9 +60,16 @@ class CategoryService extends Service
     {
         //获取验证数据
         $data = self::getValidatedData($request);
+        $data['son'] = isset($data['son']) ? json_encode($data['son']) : '';
 
-        $data['son'] = json_encode($data['son']);
-        $flag = Category::query()->create($data);
+        //创建内容
+        try {
+            $flag = Category::query()->create($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -70,9 +85,16 @@ class CategoryService extends Service
     {
         //获取验证数据
         $data = self::getValidatedData($request);
+        $data['son'] = isset($data['son']) ? json_encode($data['son']) : '';
 
-        $data['son'] = json_encode($data['son']);
-        $flag = Category::query()->where('id', $id)->update($data);
+        //更新内容
+        try {
+            $flag = Category::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -85,16 +107,32 @@ class CategoryService extends Service
      */
     public function delete($id): ResponseInterface
     {
+        //获取数据
+        try {
+            $sonCat = Category::query()->where('son', $id)->first();
+            $category = (Category::query()->select('value')->where('id', $id)->first())['value'];
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
         //是否有子分类
-        if (Category::query()->where('son', $id)->first()) {
+        if ($sonCat) {
             return $this->fail([], '存在子分类');
         }
+
         //分类是否有文章
-        $category = (Category::query()->select('value')->where('id', $id)->first())['value'];
         if (Post::query()->where('menu', '"' . $category . '"')->first()) {
             return $this->fail([], '分类存在文章');
         }
-        $flag = Category::query()->where('id', $id)->delete();
+
+        //删除分类
+        try {
+            $flag = Category::query()->where('id', $id)->delete();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }

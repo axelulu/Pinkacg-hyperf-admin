@@ -1,16 +1,15 @@
 <?php
 
-namespace App\Resource\admin;
+namespace App\Resource\home;
 
 use App\Exception\RequestException;
 use App\Model\Attachment;
 use App\Model\Category;
 use App\Model\Order;
 use App\Model\User;
+use App\Resource\admin\AttachmentPostContentResource;
 use Hyperf\HttpServer\Contract\RequestInterface;
-use Hyperf\Redis\Redis;
 use Hyperf\Resource\Json\JsonResource;
-use Hyperf\Utils\ApplicationContext;
 use Phper666\JWTAuth\JWT;
 use Hyperf\Di\Annotation\Inject;
 use Psr\SimpleCache\InvalidArgumentException;
@@ -19,15 +18,15 @@ class PostResource extends JsonResource
 {
     /**
      * @Inject
-     * @var RequestInterface
-     */
-    protected $request;
-
-    /**
-     * @Inject
      * @var JWT
      */
     protected $JWT;
+
+    /**
+     * @Inject
+     * @var RequestInterface
+     */
+    protected $request;
 
     /**
      * Transform the resource into an array.
@@ -53,7 +52,7 @@ class PostResource extends JsonResource
             'menuMeta' => self::getMenuMeta($this->menu),
             'tag' => json_decode($this->tag),
             'download_status' => (bool)((int)$this->download_status),
-            'download' => $this->download_status ? self::getDownload($this->download, $this->id) : '',
+            'download' => self::getDownload($this->download, $this->id),
             'music' => json_decode($this->music),
             'video' => json_decode($this->video),
             'views' => (int) $this->views,
@@ -78,18 +77,8 @@ class PostResource extends JsonResource
             ];
         }
         try {
-            //未登录
-            if (empty($this->request->getHeader('authorization'))) {
-                return ['code' => 400];
-            }
-            //登录
-            if ($this->request->getHeader('authorization') !== null) {
+            if ($this->JWT->checkToken() !== null) {
                 $userId = $this->JWT->getParserData()['id'];
-                //是管理员
-                if (User::isAdmin($userId)) {
-                    return $download;
-                }
-                //不是管理员
                 $orders = Order::query()->where([
                     'user_id' => $userId,
                     'post_id' => $postId
@@ -101,7 +90,7 @@ class PostResource extends JsonResource
                 }
             }
             return $newDownload;
-        } catch (\Throwable $e) {
+        } catch (InvalidArgumentException | \Throwable $e) {
             throw new RequestException($e->getMessage(), $e->getCode());
         }
     }

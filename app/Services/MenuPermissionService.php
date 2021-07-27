@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Exception\RequestException;
 use App\Filters\MenuFilter;
 use App\Model\AdminPermission;
 use App\Resource\admin\MenuPermissionResource;
@@ -28,18 +29,25 @@ class MenuPermissionService extends Service
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $menu = AdminPermission::query()
-            ->where($this->menuFilter->apply())
-            ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $menus = $menu->toArray();
+        //获取数据
+        try {
+            $menu = AdminPermission::query()
+                ->where($this->menuFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            $menus = $menu->toArray();
+            $data = self::getDisplayColumnData(MenuPermissionResource::collection($menu)->toArray(), $request);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
+        //返回结果
         return $this->success([
             'pageSize' => $menus['per_page'],
             'pageNo' => $menus['current_page'],
             'totalCount' => $menus['total'],
             'totalPage' => $menus['to'],
-            'data' => self::getDisplayColumnData(MenuPermissionResource::collection($menu)->toArray(), $request),
+            'data' => $data,
         ]);
     }
 
@@ -52,7 +60,14 @@ class MenuPermissionService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = AdminPermission::query()->create($data);
+        //创建内容
+        try {
+            $flag = AdminPermission::query()->create($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -69,7 +84,14 @@ class MenuPermissionService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = AdminPermission::query()->where('id', $id)->update($data);
+        //更新内容
+        try {
+            $flag = AdminPermission::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -82,13 +104,17 @@ class MenuPermissionService extends Service
      */
     public function delete($id): ResponseInterface
     {
-        //存在子菜单
-        if (AdminPermission::query()->where('p_id', $id)) {
-            return $this->fail([], '存在子菜单');
-        }
-        //有用户选择此菜单
-        if (AdminPermission::query()->where('id', $id)->delete()) {
-            return $this->success();
+        try {
+            //存在子菜单
+            if (AdminPermission::query()->where('p_id', $id)) {
+                return $this->fail([], '存在子菜单');
+            }
+            //有用户选择此菜单
+            if (AdminPermission::query()->where('id', $id)->delete()) {
+                return $this->success();
+            }
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
         return $this->fail();
     }

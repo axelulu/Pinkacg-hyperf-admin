@@ -21,7 +21,10 @@ use League\Flysystem\FileExistsException;
 use League\Flysystem\FileNotFoundException;
 use League\Flysystem\Filesystem;
 use Hyperf\HttpServer\Contract\ResponseInterface;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
 use Psr\Http\Message\ResponseInterface as Psr7ResponseInterface;
+use Swoole\Coroutine\Channel;
 
 abstract class Service
 {
@@ -74,6 +77,42 @@ abstract class Service
     }
 
     /**
+     * @param $title
+     * @param $code
+     * @param $email
+     * @return mixed
+     * @throws Exception
+     */
+    public function sendMail($title, $code, $email): bool
+    {
+        $channel = new Channel();
+        go(function() use ($title, $code, $email, $channel){
+            $mail = new PHPMailer; //PHPMailer对象
+            $mail->CharSet = 'UTF-8'; //设定邮件编码，默认ISO-8859-1，如果发中文此项必须设置，否则乱码
+            $mail->IsSMTP(); // 设定使用SMTP服务
+            $mail->SMTPDebug = 0; // 关闭SMTP调试功能
+            $mail->SMTPAuth = true; // 启用 SMTP 验证功能
+            $mail->SMTPSecure = env('MAIL_SMTP_ENCRYPTION', ''); // 使用安全协议
+            $mail->Host = env('MAIL_SMTP_HOST', ''); // SMTP 服务器
+            $mail->Port = env('MAIL_SMTP_PORT', ''); // SMTP服务器的端口号
+            $mail->Username = env('MAIL_SMTP_USERNAME', ''); // SMTP服务器用户名
+            $mail->Password = env('MAIL_SMTP_PASSWORD', ''); // SMTP服务器密码
+            $mail->SetFrom(env('MAIL_FROM_ADDRESS', ''), env('MAIL_FROM_NAME', '')); // 邮箱，昵称
+            $mail->Subject = $title;
+            $mail->MsgHTML($code);
+            $mail->AddAddress($email); // 收件人
+            $result = $mail->Send();
+            if ($result)
+            {
+                $channel->push(true);
+            } else {
+                $channel->push(false);
+            }
+        });
+        return $channel->pop();
+    }
+
+    /**
      * @param $min
      * @param $max
      * @param $num
@@ -120,8 +159,10 @@ abstract class Service
     {
         $data = $request->validated();
         $exceptColumns = \Qiniu\json_decode($request->getAttribute('except_columns'));
-        foreach ($exceptColumns as $k => $v) {
-            unset($data[$v]);
+        if (is_array($exceptColumns)) {
+            foreach ($exceptColumns as $k => $v) {
+                unset($data[$v]);
+            }
         }
         return $data;
     }
@@ -134,9 +175,13 @@ abstract class Service
     public function getDisplayColumnData($data, $request)
     {
         $exceptColumns = \Qiniu\json_decode($request->getAttribute('except_columns'));
-        foreach ($data as $kk => $vv) {
-            foreach ($exceptColumns as $k => $v) {
-                unset($data[$kk][$v]);
+        if (is_array($data)) {
+            foreach ($data as $kk => $vv) {
+                if (is_array($exceptColumns)) {
+                    foreach ($exceptColumns as $k => $v) {
+                        unset($data[$kk][$v]);
+                    }
+                }
             }
         }
         return $data;
@@ -232,9 +277,11 @@ abstract class Service
             '/(ax|test)is$/i' => '\1es',
             '/s$/' => 's',
         );
-        foreach ($rules as $rule => $replacement) {
-            if (preg_match($rule, $name))
-                return preg_replace($rule, $replacement, $name);
+        if (is_array($rules)) {
+            foreach ($rules as $rule => $replacement) {
+                if (preg_match($rule, $name))
+                    return preg_replace($rule, $replacement, $name);
+            }
         }
         return $name . 's';
     }

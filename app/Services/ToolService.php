@@ -18,7 +18,11 @@ class ToolService extends Service
     {
         $data = $request;
         $result = $data['key'];
-        $list = Schema::getColumnListing(self::pluralize(substr($result, 6)));
+        try {
+            $list = Schema::getColumnListing(self::pluralize(substr($result, 6)));
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
         return $this->success($list);
     }
 }

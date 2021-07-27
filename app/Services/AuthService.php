@@ -3,12 +3,15 @@
 
 namespace App\Services;
 
+use App\Exception\RequestException;
 use App\Model\AdminRole;
 use App\Model\Comment;
 use App\Model\Post;
 use App\Model\Setting;
 use App\Model\User;
 use Donjan\Casbin\Enforcer;
+use Hyperf\Redis\Redis;
+use Hyperf\Utils\ApplicationContext;
 use Psr\Http\Message\ResponseInterface;
 
 class AuthService extends Service
@@ -53,10 +56,14 @@ class AuthService extends Service
             $token = $JWT->getToken($userData);
 
             //更新用户登录时间
-            User::query()->where('username', $username)->update([
-                'updated_at' => date('Y-m-d H:i:s'),
-                'remember_token' => $token
-            ]);
+            try {
+                User::query()->where('username', $username)->update([
+                    'updated_at' => date('Y-m-d H:i:s'),
+                    'remember_token' => $token
+                ]);
+            } catch (\Throwable $throwable) {
+                throw new RequestException($throwable->getMessage(), $throwable->getCode());
+            }
 
             $data = [
                 'token' => (string)$token,
@@ -75,17 +82,22 @@ class AuthService extends Service
     {
         $data = $request->all();
         if (isset($data['username']) && isset($data['email']) && isset($data['password'])) {
-            $flag = User::query()->create([
-                'name' => $data['username'],
-                'username' => $data['username'],
-                'email' => $data['email'],
-                'check' => 1,
-                'password' => $this->passwordHash($data['password'])
-            ])->toArray();
+            //创建用户
+            try {
+                $flag = User::query()->create([
+                    'name' => $data['username'],
+                    'username' => $data['username'],
+                    'email' => $data['email'],
+                    'check' => 1,
+                    'password' => $this->passwordHash($data['password'])
+                ])->toArray();
+            } catch (\Throwable $throwable) {
+                throw new RequestException($throwable->getMessage(), $throwable->getCode());
+            }
+
             if ($flag) {
                 //获取角色id
                 $user_role = Setting::query()->select('value')->where('name', 'site_meta')->get()->toArray();
-                var_dump(\Qiniu\json_decode($user_role[0]['value']));
                 $user_role = \Qiniu\json_decode($user_role[0]['value'])->register_role;
                 //赋予角色
                 if (!self::setUserRole($flag['id'], $user_role)) {

@@ -4,6 +4,7 @@ declare (strict_types=1);
 namespace App\Model;
 
 use Hyperf\Database\Model\SoftDeletes;
+use Hyperf\DbConnection\Db;
 use Hyperf\DbConnection\Model\Model;
 /**
  * @property int $id 
@@ -36,4 +37,19 @@ class User extends Model
      * @var array
      */
     protected $casts = ['id' => 'integer', 'created_at' => 'datetime', 'updated_at' => 'datetime'];
+
+    /**
+     * @param $userId
+     * @return bool
+     */
+    public static function isAdmin($userId): bool
+    {
+        $permissionId = (AdminPermission::query()->select('id')->where([['path', 'ALL'], ['url', 'ALL']])->first()->toArray())['id'];
+        $roleId = (Db::table('casbin_rules')->select('v1')->where([['ptype', 'g'], ['v0', 'roles_' . $userId]])->first())->v1;
+        if (Db::table('casbin_rules')->where([['ptype', 'p'], ['v3', $permissionId], ['v0', 'permission_' . $roleId]])->count() > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

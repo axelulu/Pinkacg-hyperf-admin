@@ -29,7 +29,7 @@ class UploadController extends AbstractController
      * @param UploadRequest $request
      * @param Filesystem $filesystem
      * @return ResponseInterface
-     * @RequestMapping(path="uploadFile", methods="post")
+     * @RequestMapping(path="/admin/uploadFile/create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
@@ -46,7 +46,7 @@ class UploadController extends AbstractController
      * @param UploadRequest $request
      * @param Filesystem $filesystem
      * @return ResponseInterface
-     * @RequestMapping(path="uploadSiteMeta", methods="post")
+     * @RequestMapping(path="/admin/uploadSiteMeta/create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)

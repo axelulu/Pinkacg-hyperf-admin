@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Exception\RequestException;
 use App\Filters\UserFilter;
 use App\Model\AdminPermission;
 use App\Model\AdminRole;
@@ -16,6 +17,7 @@ use Donjan\Casbin\Enforcer;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Redis\Redis;
+use PHPMailer\PHPMailer\Exception;
 use Psr\Http\Message\ResponseInterface;
 
 class UserService extends Service
@@ -57,44 +59,54 @@ class UserService extends Service
         $role_meta = $user['role_meta'];
         $permission = $user['permission'];
         $permissions = array();
-        foreach ($permission as $k => $v) {
-            //每一项权限
-            $permission_item = AdminPermission::query()->where('id', $v[3])->first();
-            $method = $permission_item['method'];
-            $methods = [
-                [
-                    'action' => 'POST',
-                    'describe' => '新增',
-                    'defaultCheck' => false
-                ], [
-                    'action' => 'GET',
-                    'describe' => '查询',
-                    'defaultCheck' => false
-                ], [
-                    'action' => 'PUT',
-                    'describe' => '修改',
-                    'defaultCheck' => false
-                ], [
-                    'action' => 'DELETE',
-                    'describe' => '删除',
-                    'defaultCheck' => false
-                ]
-            ];
-            $permission_method = array();
-            foreach ($method as $k2 => $v2) {
-                if (in_array($methods[$k2]['action'], $method)) {
-                    array_push($permission_method, $methods[$k2]['action']);
+
+        //获取数据
+        try {
+            if (is_array($permission)) {
+                foreach ($permission as $k => $v) {
+                    //每一项权限
+                    $permission_item = AdminPermission::query()->where('id', $v[3])->first();
+                    $method = $permission_item['method'];
+                    $methods = [
+                        [
+                            'action' => 'POST',
+                            'describe' => '新增',
+                            'defaultCheck' => false
+                        ], [
+                            'action' => 'GET',
+                            'describe' => '查询',
+                            'defaultCheck' => false
+                        ], [
+                            'action' => 'PUT',
+                            'describe' => '修改',
+                            'defaultCheck' => false
+                        ], [
+                            'action' => 'DELETE',
+                            'describe' => '删除',
+                            'defaultCheck' => false
+                        ]
+                    ];
+                    $permission_method = array();
+                    if (is_array($method)) {
+                        foreach ($method as $k2 => $v2) {
+                            if (in_array($methods[$k2]['action'], $method)) {
+                                array_push($permission_method, $methods[$k2]['action']);
+                            }
+                        }
+                    }
+                    //重构权限数组
+                    $permission_new_item['roleId'] = $role_meta->id;
+                    $permission_new_item['permissionId'] = $permission_item['id'];
+                    $permission_new_item['permissionName'] = $permission_item['name'];
+                    $permission_new_item['actions'] = '[["action" => "add","defaultCheck" => false,"describe" => "新增"],["action" => "query","defaultCheck" => false,"describe" => "查询"],["action" => "get","defaultCheck" => false,"describe" => "详情"],["action" => "update","defaultCheck" => false,"describe" => "修改"],["action" => "delete","defaultCheck" => false,"describe" => "删除"]]';
+                    $permission_new_item['actionEntitySet'] = $permission_method;
+                    $permission_new_item['actionList'] = null;
+                    $permission_new_item['dataAccess'] = null;
+                    $permissions[$k] = $permission_new_item;
                 }
             }
-            //重构权限数组
-            $permission_new_item['roleId'] = $role_meta->id;
-            $permission_new_item['permissionId'] = $permission_item['id'];
-            $permission_new_item['permissionName'] = $permission_item['name'];
-            $permission_new_item['actions'] = '[["action" => "add","defaultCheck" => false,"describe" => "新增"],["action" => "query","defaultCheck" => false,"describe" => "查询"],["action" => "get","defaultCheck" => false,"describe" => "详情"],["action" => "update","defaultCheck" => false,"describe" => "修改"],["action" => "delete","defaultCheck" => false,"describe" => "删除"]]';
-            $permission_new_item['actionEntitySet'] = $permission_method;
-            $permission_new_item['actionList'] = null;
-            $permission_new_item['dataAccess'] = null;
-            $permissions[$k] = $permission_new_item;
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
         return $this->success([
             'id' => $user['id'],
@@ -133,14 +145,24 @@ class UserService extends Service
         $user = $JWT->getParserData();
         $permission = $user['permission'];
         $permissions = array();
-        foreach ($permission as $k => $v) {
-            //每一项权限
-            $permission_item = NavResource::make(AdminPermission::query()->where(['id' => $v[3], 'is_menu' => 1])->orderBy('sort', 'asc')->first());
-            $permissions[$k] = $permission_item;
-        }
-        $data = NavResource::collection(AdminPermission::query()->where(['p_id' => 0, 'is_menu' => 1])->orderBy('sort', 'asc')->get());
-        foreach ($data as $k => $v) {
-            array_push($permissions, $v);
+
+        //获取数据
+        try {
+            if (is_array($permission)) {
+                foreach ($permission as $k => $v) {
+                    //每一项权限
+                    $permission_item = NavResource::make(AdminPermission::query()->where(['id' => $v[3], 'is_menu' => 1])->orderBy('sort', 'asc')->first());
+                    $permissions[$k] = $permission_item;
+                }
+            }
+            $data = NavResource::collection(AdminPermission::query()->where(['p_id' => 0, 'is_menu' => 1])->orderBy('sort', 'asc')->get());
+            if (is_array($data)) {
+                foreach ($data as $k => $v) {
+                    array_push($permissions, $v);
+                }
+            }
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
         return $this->success($permissions);
     }
@@ -154,32 +176,38 @@ class UserService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $data['password'] = $this->passwordHash($data['password']);
-        if (User::query()->where('email', $data['email'])->first()) {
-            return $this->fail([], '邮箱已存在');
+        try {
+            $data['password'] = $this->passwordHash($data['password']);
+            if (User::query()->where('email', $data['email'])->first()) {
+                return $this->fail([], '邮箱已存在');
+            }
+            $user_role = $data['user_role'];
+            unset($data['user_role']);
+
+            //头像和背景文件
+            $avatar = $data['avatar'];
+            $background = $data['background'];
+
+            //头像和背景图片
+            $data['background'] = $data['background']['path'] . $data['background']['filename'] . '.' . $data['background']['type'];
+            $data['avatar'] = $data['avatar']['path'] . $data['avatar']['filename'] . '.' . $data['avatar']['type'];
+
+            //创建用户
+            $flag = UserResource::make(User::query()->create($data));
+            // 转移头像文件
+            $data['avatar'] = self::transferFile($flag['id'], $avatar, 'user_attachment');
+            // 转移背景文件
+            $data['background'] = self::transferFile($flag['id'], $background, 'user_attachment');
+
+            //更新用户
+            $flag = User::query()->where('id', $flag['id'])->update($data);
+            //赋予权限
+            Enforcer::addRoleForUser('roles_' . $flag['id'], $user_role);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-        $user_role = $data['user_role'];
-        unset($data['user_role']);
 
-        //头像和背景文件
-        $avatar = $data['avatar'];
-        $background = $data['background'];
-
-        //头像和背景图片
-        $data['background'] = $data['background']['path'] . $data['background']['filename'] . '.' . $data['background']['type'];
-        $data['avatar'] = $data['avatar']['path'] . $data['avatar']['filename'] . '.' . $data['avatar']['type'];
-
-        //创建用户
-        $flag = UserResource::make(User::query()->create($data));
-        // 转移头像文件
-        $data['avatar'] = self::transferFile($flag['id'], $avatar, 'user_attachment');
-        // 转移背景文件
-        $data['background'] = self::transferFile($flag['id'], $background, 'user_attachment');
-
-        //更新用户
-        $flag = User::query()->where('id', $flag['id'])->update($data);
-        //赋予权限
-        Enforcer::addRoleForUser('roles_' . $flag['id'], $user_role);
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -202,20 +230,27 @@ class UserService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $data['password'] = $this->passwordHash($data['password']);
+        //更新内容
+        try {
+            $data['password'] = $this->passwordHash($data['password']);
 
-        // 转移头像文件
-        $data['avatar'] = self::transferFile($id, $data['avatar'], 'user_attachment');
-        // 转移背景文件
-        $data['background'] = self::transferFile($id, $data['background'], 'user_attachment');
+            // 转移头像文件
+            $data['avatar'] = self::transferFile($id, $data['avatar'], 'user_attachment');
+            // 转移背景文件
+            $data['background'] = self::transferFile($id, $data['background'], 'user_attachment');
 
-        //赋予角色
-        if (!self::setUserRole($id, $data['user_role'])) {
-            return $this->fail([], '赋予角色失败');
+            //赋予角色
+            if (!self::setUserRole($id, $data['user_role'])) {
+                return $this->fail([], '赋予角色失败');
+            }
+            unset($data['user_role']);
+
+            $flag = User::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-        unset($data['user_role']);
 
-        $flag = User::query()->where('id', $id)->update($data);
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -235,13 +270,20 @@ class UserService extends Service
             return $this->fail([], '用户id错误');
         }
 
-        // 更新用户头像
-        $avatar = $this->request->all();
         // 转移头像文件
+        $avatar = $this->request->all();
         $avatar = self::transferFile($id, $avatar['avatar'], 'user_attachment');
-        $flag = User::query()->where('id', $id)->update([
-            'avatar' => $avatar
-        ]);
+
+        // 更新用户头像
+        try {
+            $flag = User::query()->where('id', $id)->update([
+                'avatar' => $avatar
+            ]);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -263,7 +305,13 @@ class UserService extends Service
 
         // 更新用户信息
         $data = $this->request->inputs(['name', 'desc'], ['', '']);
-        $flag = User::query()->where('id', $id)->update($data);
+        try {
+            $flag = User::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -290,9 +338,13 @@ class UserService extends Service
         //判断验证码
         if ($data['myConfirm'] === $redis->get('confirm' . $id)) {
             //更新邮箱
-            User::query()->where('id', $id)->update([
-                'email' => $data['email']
-            ]);
+            try {
+                User::query()->where('id', $id)->update([
+                    'email' => $data['email']
+                ]);
+            } catch (\Throwable $throwable) {
+                throw new RequestException($throwable->getMessage(), $throwable->getCode());
+            }
             return $this->success();
         }
         return $this->fail();
@@ -320,8 +372,12 @@ class UserService extends Service
             while (($authnum = rand() % 10000) < 1000) ;
             //存到redis里
             $redis->set('confirm' . $id, $authnum, 60);
-            if ($this->sendMail('邮箱验证', (string)$authnum, $email)) {
-                return $this->success();
+            try {
+                if (self::sendMail('邮箱验证', (string)$authnum, $email)) {
+                    return $this->success();
+                }
+            } catch (Exception $e) {
+                throw new RequestException($e->getMessage(), $e->getCode());
             }
         }
         return $this->fail();
@@ -345,14 +401,20 @@ class UserService extends Service
         if (empty($data['password']) || empty($data['newPassword']) || empty($data['confirmPassword'])) {
             return $this->fail([], '密码为空');
         }
-        if (User::query()->where('password', $this->passwordHash($data['password'])) && ($data['newPassword'] === $data['confirmPassword'])) {
-            $flag = User::query()->where('id', $id)->update([
-                'password' => $this->passwordHash($data['confirmPassword'])
-            ]);
-            if ($flag) {
-                return $this->success();
+
+        //更新密码
+        try {
+            if (User::query()->where('password', $this->passwordHash($data['password'])) && ($data['newPassword'] === $data['confirmPassword'])) {
+                $flag = User::query()->where('id', $id)->update([
+                    'password' => $this->passwordHash($data['confirmPassword'])
+                ]);
+                if ($flag) {
+                    return $this->success();
+                }
+                return $this->fail();
             }
-            return $this->fail();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
         return $this->fail();
     }
@@ -370,15 +432,22 @@ class UserService extends Service
             return $this->fail([], '用户id错误');
         }
 
-        //判断用户存在文章
-        if (Post::query()->where('author', $id)->first()) {
-            return $this->fail([], '用户存在文章');
+        //删除内容
+        try {
+            //判断用户存在文章
+            if (Post::query()->where('author', $id)->first()) {
+                return $this->fail([], '用户存在文章');
+            }
+            //判断用户存在评论
+            if (Comment::query()->where('user_id', $id)->first()) {
+                return $this->fail([], '用户存在评论');
+            }
+            $flag = User::query()->where('id', $id)->delete();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-        //判断用户存在评论
-        if (Comment::query()->where('user_id', $id)->first()) {
-            return $this->fail([], '用户存在评论');
-        }
-        $flag = User::query()->where('id', $id)->delete();
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }

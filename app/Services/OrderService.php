@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Exception\RequestException;
 use App\Filters\OrderFilter;
 use App\Model\Order;
 use App\Model\Post;
@@ -30,18 +31,25 @@ class OrderService extends Service
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $order = Order::query()
-            ->where($this->orderFilter->apply())
-            ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $orders = $order->toArray();
+        //获取数据
+        try {
+            $order = Order::query()
+                ->where($this->orderFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            $orders = $order->toArray();
+            $data = self::getDisplayColumnData(OrderResource::collection($order)->toArray(), $request);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
+        //返回结果
         return $this->success([
             'pageSize' => $orders['per_page'],
             'pageNo' => $orders['current_page'],
             'totalCount' => $orders['total'],
             'totalPage' => $orders['to'],
-            'data' => self::getDisplayColumnData(OrderResource::collection($order)->toArray(), $request),
+            'data' => $data,
         ]);
     }
 
@@ -54,7 +62,14 @@ class OrderService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = (new OrderResource(Order::query()->create($data)))->toResponse();
+        //创建内容
+        try {
+            $flag = Order::query()->create($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -71,7 +86,14 @@ class OrderService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = Order::query()->where('id', $id)->update($data);
+        //更新内容
+        try {
+            $flag = Order::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -84,7 +106,14 @@ class OrderService extends Service
      */
     public function delete($id): ResponseInterface
     {
-        $flag = Order::query()->where('id', $id)->delete();
+        //删除内容
+        try {
+            $flag = Order::query()->where('id', $id)->delete();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -100,29 +129,33 @@ class OrderService extends Service
         $data = $request->all();
 
         if (isset($data['credit']) && isset($data['download_key']) && isset($data['post_id']) && isset($data['user_id'])) {
-            //判断积分
-            $credit = (User::query()->select('credit')->where('id', $data['user_id'])->get())[0]['credit'];
-            var_dump($credit);
-            if ($credit < $data['credit'] || $credit <= 0) {
-                return $this->fail([], '积分不够');
-            }
+            //购买文章
+            try {
+                //判断积分
+                $credit = (User::query()->select('credit')->where('id', $data['user_id'])->get())[0]['credit'];
+                if ($credit < $data['credit'] || $credit <= 0) {
+                    return $this->fail([], '积分不够');
+                }
 
-            $flag = Order::query()->insert([
-                'user_id' => $data['user_id'],
-                'post_id' => $data['post_id'],
-                'type' => 'post',
-                'download_key' => $data['download_key'],
-                'credit' => $data['credit'],
-            ]);
+                $flag = Order::query()->insert([
+                    'user_id' => $data['user_id'],
+                    'post_id' => $data['post_id'],
+                    'type' => 'post',
+                    'download_key' => $data['download_key'],
+                    'credit' => $data['credit'],
+                ]);
 
-            //扣取积分
-            $credit = $credit - $data['credit'];
-            User::query()->where('id', $data['user_id'])->update([
-                'credit' => $credit
-            ]);
-            if ($flag) {
-                $download = \Qiniu\json_decode((Post::query()->select('download')->where('id', $data['post_id'])->get()->toArray())[0]['download'])[$data['download_key']];
-                return $this->success(['data' => $download]);
+                //扣取积分
+                $credit = $credit - $data['credit'];
+                User::query()->where('id', $data['user_id'])->update([
+                    'credit' => $credit
+                ]);
+                if ($flag) {
+                    $download = \Qiniu\json_decode((Post::query()->select('download')->where('id', $data['post_id'])->get()->toArray())[0]['download'])[$data['download_key']];
+                    return $this->success(['data' => $download]);
+                }
+            } catch (\Throwable $throwable) {
+                throw new RequestException($throwable->getMessage(), $throwable->getCode());
             }
         }
         return $this->fail();

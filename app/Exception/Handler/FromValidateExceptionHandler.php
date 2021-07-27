@@ -24,7 +24,7 @@ use Throwable;
  */
 class FromValidateExceptionHandler extends ExceptionHandler
 {
-    public function handle(Throwable $throwable, ResponseInterface $response)
+    public function handle(Throwable $throwable, ResponseInterface $response): ResponseInterface
     {
         if ($throwable instanceof ValidationException) {
             // 格式化异常数据格式
@@ -32,7 +32,7 @@ class FromValidateExceptionHandler extends ExceptionHandler
                 'code' => $throwable->getCode(),
                 // 获取异常信息
                 'message' => $throwable->validator->errors()->first(),
-                'data' => [],
+                'result' => [],
             ]);
             $this->stopPropagation();
             return $response->withStatus(422)->withBody(new SwooleStream($data));

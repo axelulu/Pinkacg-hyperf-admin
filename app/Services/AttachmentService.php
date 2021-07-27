@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Exception\RequestException;
 use App\Filters\AttachmentFilter;
 use App\Model\Attachment;
 use App\Resource\admin\AttachmentResource;
@@ -26,18 +27,25 @@ class AttachmentService extends Service
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $attachment = Attachment::query()
-            ->where($this->attachmentFilter->apply())
-            ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $attachments = $attachment->toArray();
+        //获取数据
+        try {
+            $attachment = Attachment::query()
+                ->where($this->attachmentFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            $attachments = $attachment->toArray();
+            $data = self::getDisplayColumnData(AttachmentResource::collection($attachment)->toArray(), $request);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
+        //返回结果
         return $this->success([
             'pageSize' => $attachments['per_page'],
             'pageNo' => $attachments['current_page'],
             'totalCount' => $attachments['total'],
             'totalPage' => $attachments['to'],
-            'data' => self::getDisplayColumnData(AttachmentResource::collection($attachment)->toArray(), $request),
+            'data' => $data,
         ]);
     }
 
@@ -51,16 +59,25 @@ class AttachmentService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
+        //操作附件
         $cat_name = $data['cat'];
         try {
             $filesystem->copy('uploads/' . $data['path'] . '/' . $data['filename'] . '.' . $data['type'],
                 'uploads/' . $cat_name . '/' . $data['user_id'] . '/' . $data['post_id'] . '/' . $data['filename'] . '.' . $data['type']);
             $filesystem->delete('uploads/' . $data['path'] . '/' . $data['filename'] . '.' . $data['type']);
         } catch (FileExistsException | FileNotFoundException $e) {
-            return $this->fail([], '新建出错！');
+            throw new RequestException($e->getMessage(), $e->getCode());
         }
         $data['path'] = $cat_name . '/' . $data['user_id'] . '/' . $data['post_id'];
-        $flag = Attachment::query()->create($data);
+
+        //创建附件
+        try {
+            $flag = Attachment::query()->create($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -80,6 +97,7 @@ class AttachmentService extends Service
 
         $cat_name = $data['cat'];
         $oldData = Attachment::query()->select('cat', 'user_id', 'post_id', 'filename', 'type')->where('id', $data['id'])->first();
+
         // 转移文件到其他目录
         try {
             if (!$filesystem->has('uploads/' . $cat_name . '/' . $data['user_id'] . '/' . $data['post_id'] . '/' . $data['filename'] . '.' . $data['type'])) {
@@ -88,10 +106,18 @@ class AttachmentService extends Service
                 $filesystem->delete('uploads/' . $oldData['cat'] . '/' . $oldData['user_id'] . '/' . $oldData['post_id'] . '/' . $oldData['filename'] . '.' . $oldData['type']);
             }
         } catch (FileExistsException | FileNotFoundException $e) {
-            return $this->fail([], '更新出错！');
+            throw new RequestException($e->getMessage(), $e->getCode());
         }
         $data['path'] = $cat_name . '/' . $data['user_id'] . '/' . $data['post_id'];
-        $flag = Attachment::query()->where('id', $id)->update($data);
+
+        //更新附件
+        try {
+            $flag = Attachment::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -108,12 +134,22 @@ class AttachmentService extends Service
     {
         // 验证
         $data = $request->validated();
+
+        //删除附件
         try {
             $filesystem->delete('uploads/' . $data['path'] . '/' . $data['filename'] . '.' . $data['type']);
         } catch (FileNotFoundException $e) {
-            return $this->fail([], '删除出错！');
+            throw new RequestException($e->getMessage(), $e->getCode());
         }
-        $flag = Attachment::query()->where('id', $id)->delete();
+
+        //删除数据库附件
+        try {
+            $flag = Attachment::query()->where('id', $id)->delete();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }

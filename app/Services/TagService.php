@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Exception\RequestException;
 use App\Filters\TagFilter;
 use App\Model\Tag;
 use App\Resource\admin\TagResource;
@@ -28,18 +29,25 @@ class TagService extends Service
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $tag = Tag::query()
-            ->where($this->tagFilter->apply())
-            ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $tags = $tag->toArray();
+        //获取数据
+        try {
+            $tag = Tag::query()
+                ->where($this->tagFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            $tags = $tag->toArray();
+            $data = self::getDisplayColumnData(TagResource::collection($tag)->toArray(), $request);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
+        //返回结果
         return $this->success([
             'pageSize' => $tags['per_page'],
             'pageNo' => $tags['current_page'],
             'totalCount' => $tags['total'],
             'totalPage' => $tags['to'],
-            'data' => self::getDisplayColumnData(TagResource::collection($tag)->toArray(), $request),
+            'data' => $data,
         ]);
     }
 
@@ -52,7 +60,14 @@ class TagService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = (new TagResource(Tag::query()->create($data)))->toResponse();
+        //创建内容
+        try {
+            $flag = Tag::query()->create($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -69,7 +84,14 @@ class TagService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = Tag::query()->where('id', $id)->update($data);
+        //更新内容
+        try {
+            $flag = Tag::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -82,7 +104,14 @@ class TagService extends Service
      */
     public function delete($id): ResponseInterface
     {
-        $flag = Tag::query()->where('id', $id)->delete();
+        //删除内容
+        try {
+            $flag = Tag::query()->where('id', $id)->delete();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }

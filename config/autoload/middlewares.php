@@ -15,7 +15,7 @@ use Hyperf\Validation\Middleware\ValidationMiddleware;
 return [
     'http' => [
         // 数组内配置您的全局中间件，顺序根据该数组的顺序
-        ValidationMiddleware::class,
+        ValidationMiddleware::class
         // 这里隐藏了其它中间件
     ],
 ];

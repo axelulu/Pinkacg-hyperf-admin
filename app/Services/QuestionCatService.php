@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Exception\RequestException;
 use App\Filters\QuestionCatFilter;
 use App\Model\QuestionCat;
 use App\Resource\admin\QuestionCatResource;
@@ -28,18 +29,25 @@ class QuestionCatService extends Service
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $questionCat = QuestionCat::query()
-            ->where($this->questionCatFilter->apply())
-            ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $questionCats = $questionCat->toArray();
+        //获取数据
+        try {
+            $questionCat = QuestionCat::query()
+                ->where($this->questionCatFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            $questionCats = $questionCat->toArray();
+            $data = self::getDisplayColumnData(QuestionCatResource::collection($questionCat)->toArray(), $request);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
+        //返回结果
         return $this->success([
             'pageSize' => $questionCats['per_page'],
             'pageNo' => $questionCats['current_page'],
             'totalCount' => $questionCats['total'],
             'totalPage' => $questionCats['to'],
-            'data' => self::getDisplayColumnData(QuestionCatResource::collection($questionCat)->toArray(), $request),
+            'data' => $data,
         ]);
     }
 
@@ -52,7 +60,14 @@ class QuestionCatService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = (new QuestionCatResource(QuestionCat::query()->create($data)))->toResponse();
+        //创建内容
+        try {
+            $flag = QuestionCat::query()->create($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -69,7 +84,14 @@ class QuestionCatService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = QuestionCat::query()->where('id', $id)->update($data);
+        //更新内容
+        try {
+            $flag = QuestionCat::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -82,7 +104,14 @@ class QuestionCatService extends Service
      */
     public function delete($id): ResponseInterface
     {
-        $flag = QuestionCat::query()->where('id', $id)->delete();
+        //删除内容
+        try {
+            $flag = QuestionCat::query()->where('id', $id)->delete();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }

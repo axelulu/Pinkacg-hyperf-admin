@@ -67,7 +67,6 @@ class PermissionMiddleware implements MiddlewareInterface
         //获取请求权限路径
         $requestPermissionPath = substr($path, 0, strpos($path, '/', strpos($path, '/') + 1));
         $allPermission = AdminPermission::query()->select('id', 'method', 'key')->where('path', $requestPermissionPath)->get()->toArray();
-        var_dump($requestPermissionPath);
         //获取请求方法
         $requestMethod = $this->request->getMethod();
 
@@ -93,10 +92,6 @@ class PermissionMiddleware implements MiddlewareInterface
                 $userPermission = Db::table('casbin_rules')->where(['v3' => $v['id'], 'ptype' => 'p'])->get();
                 foreach ($userPermission as $kk => $vv) {
                     if (Db::table('casbin_rules')->where(['v0' => 'roles_' . $user['id'], 'v1' => substr($vv->v0, 11, 1)])->get()->count()) {
-//                        $parsedData = $request->getParsedBody();
-//                        $request = $request->withParsedBody(array_merge($parsedData, [
-//                            'except_columns' => $allPermission[$k]['key']
-//                        ]));
                         $request = $request->withAttribute('except_columns', $allPermission[$k]['key']);
                         return $handler->handle($request);
                     }

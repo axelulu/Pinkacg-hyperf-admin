@@ -3,6 +3,7 @@
 
 namespace App\Services;
 
+use App\Exception\RequestException;
 use App\Filters\RoleFilter;
 use App\Model\AdminRole;
 use App\Resource\admin\RoleResource;
@@ -27,17 +28,24 @@ class RoleService extends Service
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $role = AdminRole::query()
-            ->where($this->roleFilter->apply())
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $roles = $role->toArray();
+        //获取内容
+        try {
+            $role = AdminRole::query()
+                ->where($this->roleFilter->apply())
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            $roles = $role->toArray();
+            $data = self::getDisplayColumnData(RoleResource::collection($role)->toArray(), $request);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
+        //返回结果
         return $this->success([
             'pageSize' => $roles['per_page'],
             'pageNo' => $roles['current_page'],
             'totalCount' => $roles['total'],
             'totalPage' => $roles['to'],
-            'data' => self::getDisplayColumnData(RoleResource::collection($role)->toArray(), $request),
+            'data' => $data,
         ]);
     }
 
@@ -51,7 +59,11 @@ class RoleService extends Service
         $data = self::getValidatedData($request);
 
         //创建角色
-        $flag = AdminRole::query()->create($data);
+        try {
+            $flag = AdminRole::query()->create($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
         //赋予权限
         if (isset($data['rolePermission'])) {
@@ -61,6 +73,7 @@ class RoleService extends Service
             }
         }
 
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -86,7 +99,14 @@ class RoleService extends Service
             unset($data['rolePermission']);
         }
 
-        $flag = AdminRole::query()->where('id', $id)->update($data);
+        //更新内容
+        try {
+            $flag = AdminRole::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -103,7 +123,16 @@ class RoleService extends Service
         if (Enforcer::getUsersForRole((string)$id)) {
             return $this->fail([], '角色存在用户！');
         }
-        if (AdminRole::query()->where('id', $id)->delete()) {
+
+        //删除内容
+        try {
+            $flag = AdminRole::query()->where('id', $id)->delete();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
+        if ($flag) {
             return $this->success();
         }
         return $this->fail();

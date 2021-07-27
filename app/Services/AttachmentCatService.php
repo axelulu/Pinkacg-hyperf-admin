@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Exception\RequestException;
 use App\Filters\AttachmentCatFilter;
 use App\Model\AttachmentCat;
 use App\Resource\admin\AttachmentCatResource;
@@ -28,18 +29,25 @@ class AttachmentCatService extends Service
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $attachmentCat = AttachmentCat::query()
-            ->where($this->attachmentCatFilter->apply())
-            ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $attachmentCats = $attachmentCat->toArray();
+        //获取数据
+        try {
+            $attachmentCat = AttachmentCat::query()
+                ->where($this->attachmentCatFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            $attachmentCats = $attachmentCat->toArray();
+            $data = self::getDisplayColumnData(AttachmentCatResource::collection($attachmentCat)->toArray(), $request);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
+        //返回结果
         return $this->success([
             'pageSize' => $attachmentCats['per_page'],
             'pageNo' => $attachmentCats['current_page'],
             'totalCount' => $attachmentCats['total'],
             'totalPage' => $attachmentCats['to'],
-            'data' => self::getDisplayColumnData(AttachmentCatResource::collection($attachmentCat)->toArray(), $request),
+            'data' => $data,
         ]);
     }
 
@@ -52,7 +60,14 @@ class AttachmentCatService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = (new AttachmentCatResource(AttachmentCat::query()->create($data)))->toResponse();
+        //创建分类
+        try {
+            $flag = AttachmentCat::query()->create($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -69,7 +84,14 @@ class AttachmentCatService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = AttachmentCat::query()->where('id', $id)->update($data);
+        //更新分类
+        try {
+            $flag = AttachmentCat::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -82,7 +104,14 @@ class AttachmentCatService extends Service
      */
     public function delete($id): ResponseInterface
     {
-        $flag = AttachmentCat::query()->where('id', $id)->delete();
+        //删除分类
+        try {
+            $flag = AttachmentCat::query()->where('id', $id)->delete();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }

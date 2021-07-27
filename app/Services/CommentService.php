@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Exception\RequestException;
 use App\Filters\CommentFilter;
 use App\Model\Comment;
 use App\Model\Post;
@@ -29,18 +30,25 @@ class CommentService extends Service
         $pageSize = $request->query('pageSize') ?? 1000;
         $pageNo = $request->query('pageNo') ?? 1;
 
-        $comment = Comment::query()
-            ->where($this->commentFilter->apply())
-            ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $comments = $comment->toArray();
+        //获取数据
+        try {
+            $comment = Comment::query()
+                ->where($this->commentFilter->apply())
+                ->orderBy($orderBy, 'asc')
+                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            $comments = $comment->toArray();
+            $data = self::getDisplayColumnData(CommentResource::collection($comment)->toArray(), $request);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
 
+        //返回结果
         return $this->success([
             'pageSize' => $comments['per_page'],
             'pageNo' => $comments['current_page'],
             'totalCount' => $comments['total'],
             'totalPage' => $comments['to'],
-            'data' => self::getDisplayColumnData(CommentResource::collection($comment)->toArray(), $request),
+            'data' => $data,
         ]);
     }
 
@@ -53,7 +61,14 @@ class CommentService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = (new CommentResource(Comment::query()->create($data)))->toResponse();
+        //创建内容
+        try {
+            $flag = Comment::query()->create($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -68,8 +83,13 @@ class CommentService extends Service
      */
     public function update($request, $JWT, $id): ResponseInterface
     {
+        //获取作者id
+        try {
+            $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
         //判断是否是JWT用户
-        $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
         if (!self::isJWTUser($request, $JWT->getParserData()['id'], $postAuthorId)) {
             return $this->fail([], '用户id错误');
         }
@@ -77,7 +97,14 @@ class CommentService extends Service
         //获取验证数据
         $data = self::getValidatedData($request);
 
-        $flag = Comment::query()->where('id', $id)->update($data);
+        //更新内容
+        try {
+            $flag = Comment::query()->where('id', $id)->update($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
@@ -92,13 +119,25 @@ class CommentService extends Service
      */
     public function delete($request, $JWT, $id): ResponseInterface
     {
+        //获取作者id
+        try {
+            $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
         //判断是否是JWT用户
-        $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
         if (!self::isJWTUser($request, $JWT->getParserData()['id'], $postAuthorId)) {
             return $this->fail([], '用户id错误');
         }
 
-        $flag = Comment::query()->where('id', $id)->delete();
+        //删除内容
+        try {
+            $flag = Comment::query()->where('id', $id)->delete();
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+
+        //返回结果
         if ($flag) {
             return $this->success();
         }
