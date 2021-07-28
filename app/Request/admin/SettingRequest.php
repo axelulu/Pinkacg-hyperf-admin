@@ -22,9 +22,8 @@ class SettingRequest extends FormRequest
     public function rules(): array
     {
         return [
-//            'id' => 'required',
-            'name' => 'required',
-            'value' => 'required',
+            'name' => 'required|string|min:2|max:100|exists:settings,name',
+            'value' => 'required|array',
         ];
     }
 
@@ -34,7 +33,6 @@ class SettingRequest extends FormRequest
     public function messages(): array
     {
         return [
-//            'id:required' => '请输入id！',
             'name:required' => '请输入标识！',
             'value:required' => '请输入值！',
         ];

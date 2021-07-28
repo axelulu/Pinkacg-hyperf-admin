@@ -22,10 +22,10 @@ class QuestionCatRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => '',
-            'name' => 'required',
-            'slug' => 'required',
-            'status' => 'required'
+            'id' => 'integer',
+            'name' => 'required|string|max:30|min:2',
+            'slug' => 'regex:/^[\w-]*$/|max:30|min:2',
+            'status' => 'required|boolean'
         ];
     }
 

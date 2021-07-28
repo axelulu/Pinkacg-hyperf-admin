@@ -14,12 +14,15 @@ class UploadService extends Service
      * @param $filesystem
      * @return ResponseInterface
      */
-    public function uploadFile($request, $filesystem): ResponseInterface
+    public function uploadImgFile($request, $filesystem): ResponseInterface
     {
         $file = $request->validated();
         $postImg = $file['file'];
-        if (isset($file['id'])) {
-            Attachment::query()->where('id', $file['id'])->delete();
+        if ($postImg->getSize() / 1024 /1024 > 4) {
+            return $this->fail([], '文件超过4M');
+        }
+        if ($postImg->getMimeType() !== 'image/jpeg' && $postImg->getMimeType() !== 'image/png') {
+            return $this->fail([], '文件类型错误');
         }
         if (!$postImg->isValid()) {
             return $this->fail([], '文件错误');
@@ -67,6 +70,12 @@ class UploadService extends Service
         $postId = $file['post_id'];
         if (isset($file['id']) && $file['id'] !== 0) {
             Attachment::query()->where('id', $file['id'])->delete();
+        }
+        if ($postImg->getSize() / 1024 /1024 > 2) {
+            return $this->fail([], '文件超过2M');
+        }
+        if ($postImg->getMimeType() !== 'image/jpeg' && $postImg->getMimeType() !== 'image/png') {
+            return $this->fail([], '文件类型错误');
         }
         if (!isset($userId) || !isset($postId)) {
             return $this->fail([], '文件参数缺失');

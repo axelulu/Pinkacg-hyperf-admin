@@ -22,17 +22,17 @@ class AttachmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => '',
-            'title' => 'required',
-            'original_name' => 'required',
-            'filename' => 'required',
-            'path' => 'required',
-            'type' => 'required',
-            'cat' => 'required',
-            'size' => 'required',
-            'user_id' => 'required',
-            'post_id' => 'required',
-//            'updated_at' => 'required',
+            'id' => 'integer',
+            'newFile' => 'array',
+            'title' => 'string|max:50|min:4',
+            'original_name' => 'string|max:50|min:4',
+            'filename' => 'string|max:50|min:4',
+            'path' => 'string|max:50|min:1',
+            'type' => 'string|max:50|min:1',
+            'cat' => 'required|string|max:50|min:0|exists:attachment_cats,slug',
+            'size' => 'integer',
+            'user_id' => 'required|integer',
+            'post_id' => 'required|integer',
         ];
     }
 
@@ -42,7 +42,7 @@ class AttachmentRequest extends FormRequest
     public function messages(): array
     {
         return [
-//            'id:required' => '请输入id！',
+            'id:required' => '请输入id！',
             'title:required' => '请输入名称！',
             'original_name:required' => '请输入文件名称！',
             'filename:required' => '请输入文件名称！',

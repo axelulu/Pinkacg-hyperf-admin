@@ -7,6 +7,8 @@ namespace App\Controller\Admin;
 use App\Controller\AbstractController;
 use App\Request\admin\AttachmentRequest;
 use App\Services\AttachmentService;
+use League\Flysystem\FileExistsException;
+use League\Flysystem\FileNotFoundException;
 use League\Flysystem\Filesystem;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
@@ -45,28 +47,28 @@ class AttachmentController extends AbstractController
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(AttachmentService $attachmentService, AttachmentRequest $request, Filesystem $filesystem): ResponseInterface
+    public function create(AttachmentService $attachmentService, AttachmentRequest $request): ResponseInterface
     {
         //交给service处理
-        return $attachmentService->create($request, $filesystem);
+        return $attachmentService->create($request);
     }
 
     /**
      * @param AttachmentService $attachmentService
      * @param AttachmentRequest $request
-     * @param Filesystem $filesystem
-     * @param int $id
      * @return ResponseInterface
+     * @throws FileExistsException
+     * @throws FileNotFoundException
      * @RequestMapping(path="update/{id}", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(AttachmentService $attachmentService, AttachmentRequest $request, Filesystem $filesystem, int $id): ResponseInterface
+    public function update(AttachmentService $attachmentService, AttachmentRequest $request): ResponseInterface
     {
         //交给service处理
-        return $attachmentService->update($request, $filesystem, $id);
+        return $attachmentService->update($request);
     }
 
     /**

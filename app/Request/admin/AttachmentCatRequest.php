@@ -22,10 +22,9 @@ class AttachmentCatRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => '',
-            'name' => 'required',
-            'slug' => 'required',
-            'status' => 'required'
+            'name' => 'required|string|max:25|min:4',
+            'slug' => 'regex:/^[\w-]*$/|max:25|min:4',
+            'status' => 'required|boolean'
         ];
     }
 

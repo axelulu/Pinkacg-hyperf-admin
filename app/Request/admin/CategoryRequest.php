@@ -22,13 +22,11 @@ class CategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-//            'id' => 'required',
-            'label' => 'required',
-            'value' => 'required',
-            'son' => 'required',
-            'icon' => 'required',
-            'status' => 'required',
-//            'updated_at' => 'required',
+            'label' => 'required|string|max:15|min:2',
+            'value' => 'regex:/^[\w-]*$/|max:25|min:2',
+            'son' => 'required|integer',
+            'icon' => 'required|string|max:15|min:2',
+            'status' => 'required|boolean',
         ];
     }
 
@@ -38,13 +36,11 @@ class CategoryRequest extends FormRequest
     public function messages(): array
     {
         return [
-//            'id:required' => '请输入id！',
             'label:required' => '请输入名称！',
             'value:required' => '请输入标识！',
             'son:required' => '请输入父菜单！',
             'icon:required' => '请输入icon！',
             'status:required' => '请输入状态！',
-//            'updated_at:required' => '请输入更新时间！',
         ];
     }
 }

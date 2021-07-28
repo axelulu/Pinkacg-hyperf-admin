@@ -22,13 +22,11 @@ class OrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-//            'id' => 'required',
-            'user_id' => 'required',
-            'post_id' => 'required',
-            'type' => 'required',
-            'download_key' => '',
-            'credit' => 'required',
-//            'updated_at' => 'required'
+            'user_id' => 'required|integer|exists:users,id',
+            'post_id' => 'required|integer|exists:posts,id',
+            'type' => 'required|string|min:2|max:20',
+            'download_key' => 'integer',
+            'credit' => 'required|integer',
         ];
     }
 
@@ -38,13 +36,10 @@ class OrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-//            'id:required' => '请输入id！',
             'user_id:required' => '请输入用户id！',
             'post_id:required' => '请输入文章id！',
             'type:required' => '请输入类型！',
-//            'download_key:required' => '请输入下载下标！',
             'credit:required' => '请输入积分！',
-//            'updated_at:required' => '请输入更新时间！'
         ];
     }
 }

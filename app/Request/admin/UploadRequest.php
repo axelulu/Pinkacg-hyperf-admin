@@ -22,10 +22,10 @@ class UploadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => 'required|max:25500',
+            'file' => 'required|image|min:1|max:4096',
             'id' => '',
-            'post_id' => 'integer',
-            'user_id' => 'integer',
+            'post_id' => 'integer|exists:posts,id',
+            'user_id' => 'integer|exists:users,id',
         ];
     }
 

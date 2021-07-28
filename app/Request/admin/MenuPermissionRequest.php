@@ -22,17 +22,17 @@ class MenuPermissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required',
-            'title' => 'required',
-            'icon' => 'required',
-            'path' => 'required',
-            'url' => 'required',
-            'status' => 'required',
-            'method' => 'required',
-            'key' => '',
-            'p_id' => 'required',
-            'is_menu' => 'required',
-            'sort' => 'required',
+            'name' => 'regex:/^[\w-]*$/|max:15|min:2',
+            'title' => 'required|string|max:30|min:2',
+            'icon' => 'required|string|max:15|min:2',
+            'path' => 'required|string|max:30|min:2',
+            'url' => 'required|string|max:30|min:2',
+            'status' => 'required|boolean',
+            'method' => 'required|string|max:30|min:2',
+            'key' => 'string',
+            'p_id' => 'required|integer',
+            'is_menu' => 'required|boolean',
+            'sort' => 'required|integer',
         ];
     }
 

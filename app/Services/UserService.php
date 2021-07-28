@@ -176,6 +176,7 @@ class UserService extends Service
     {
         //获取验证数据
         $data = self::getValidatedData($request);
+        $data['ip'] = $this->request->getServerParams()['remote_addr'];
 
         try {
             $data['password'] = $this->passwordHash($data['password']);
@@ -230,7 +231,7 @@ class UserService extends Service
 
         //获取验证数据
         $data = self::getValidatedData($request);
-
+        $data['ip'] = $this->request->getServerParams()['remote_addr'];
         //更新内容
         try {
             $data['password'] = $this->passwordHash($data['password']);

@@ -29,16 +29,16 @@ class UploadController extends AbstractController
      * @param UploadRequest $request
      * @param Filesystem $filesystem
      * @return ResponseInterface
-     * @RequestMapping(path="/admin/uploadFile/create", methods="post")
+     * @RequestMapping(path="/admin/uploadImgFile/create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function uploadFile(UploadService $uploadService, UploadRequest $request, Filesystem $filesystem): ResponseInterface
+    public function uploadImgFile(UploadService $uploadService, UploadRequest $request, Filesystem $filesystem): ResponseInterface
     {
         //交给service处理
-        return $uploadService->uploadFile($request, $filesystem);
+        return $uploadService->uploadImgFile($request, $filesystem);
     }
 
     /**

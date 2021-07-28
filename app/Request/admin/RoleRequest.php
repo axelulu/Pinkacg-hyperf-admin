@@ -22,11 +22,11 @@ class RoleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => '',
-            'name' => 'required',
-            'description' => 'required',
-            'status' => 'required',
-            'rolePermission' => '',
+            'id' => 'integer',
+            'name' => 'required|string|min:2|max:20',
+            'description' => 'required|string|min:2|max:200',
+            'status' => 'required|boolean',
+            'rolePermission' => 'array',
         ];
     }
 

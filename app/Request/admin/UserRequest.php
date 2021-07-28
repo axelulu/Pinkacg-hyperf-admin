@@ -22,22 +22,17 @@ class UserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'avatar' => 'required|max:255',
-            'background' => 'required|max:2550',
-            'check' => 'required',
-//            'created_at' => 'required',
-//            'created_id' => 'required',
-            'email' => 'required',
-            'ip' => 'required',
-            'name' => 'required',
-            'desc' => 'required',
+            'avatar' => 'required',
+            'background' => 'required',
+            'check' => 'required|boolean',
+            'email' => 'required|email',
+            'name' => 'required|string|min:2|max:100',
+            'desc' => 'required|string|min:2|max:200',
             'password' => 'required',
-//            'remember_token' => 'required',
-            'telephone' => 'required',
-            'answertest' => 'required',
-//            'updated_at' => 'required',
-            'username' => 'required',
-            'user_role' => 'required'
+            'telephone' => 'required|integer',
+            'answertest' => 'required|integer',
+            'username' => 'required|string|min:2|max:100',
+            'user_role' => 'required|integer'
         ];
     }
 
@@ -47,10 +42,8 @@ class UserRequest extends FormRequest
     public function messages(): array
     {
         return [
-//            'id.required' => '请输入状态！',
             'check.required' => '请输入状态！',
             'email.required'  => '请输入邮箱！',
-            'ip.required'  => '请输入ip！',
             'name.required'  => '请输入昵称！',
             'desc.required'  => '请输入描述！',
             'avatar.required'  => '请输入头像！',

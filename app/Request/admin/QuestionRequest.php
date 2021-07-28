@@ -22,15 +22,13 @@ class QuestionRequest extends FormRequest
     public function rules(): array
     {
         return [
-//            'id' => 'required',
-            'question' => 'required',
-            'A' => 'required',
-            'B' => 'required',
-            'C' => 'required',
-            'D' => 'required',
-            'answer' => 'required',
-            'category' => 'required',
-//            'updated_at' => 'required'
+            'question' => 'required|string|min:4|max:200',
+            'A' => 'required|string|min:2|max:200',
+            'B' => 'required|string|min:2|max:200',
+            'C' => 'required|string|min:2|max:200',
+            'D' => 'required|string|min:2|max:200',
+            'answer' => 'required|string',
+            'category' => 'required|string|exists:question_cats,slug',
         ];
     }
 

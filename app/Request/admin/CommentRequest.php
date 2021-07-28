@@ -22,12 +22,12 @@ class CommentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'post_ID' => 'required',
-            'content' => 'required',
-            'parent' => 'required',
-            'user_id' => 'required',
-            'like' => 'required',
-            'status' => 'required',
+            'post_ID' => 'required|integer|exists:posts,id',
+            'content' => 'required|string|max:200|min:2',
+            'parent' => 'required|integer',
+            'user_id' => 'required|integer|exists:users,id',
+            'like' => 'required|integer',
+            'status' => 'required|boolean',
         ];
     }
 
