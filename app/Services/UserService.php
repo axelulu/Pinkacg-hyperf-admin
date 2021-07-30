@@ -31,7 +31,7 @@ class UserService extends Service
     public function index($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
-        $pageSize = $request->query('pageSize') ?? 1000;
+        $pageSize = $request->query('pageSize') ?? 12;
         $pageNo = $request->query('pageNo') ?? 1;
 
         $user = User::query()

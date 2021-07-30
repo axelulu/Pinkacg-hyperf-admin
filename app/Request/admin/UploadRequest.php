@@ -24,8 +24,8 @@ class UploadRequest extends FormRequest
         return [
             'file' => 'required|image|min:1|max:4096',
             'id' => '',
-            'post_id' => 'integer|exists:posts,id',
-            'user_id' => 'integer|exists:users,id',
+            'post_id' => 'integer',
+            'user_id' => 'integer',
         ];
     }
 

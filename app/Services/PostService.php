@@ -39,20 +39,23 @@ class PostService extends Service
     public function index($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
-        $pageSize = $request->query('pageSize') ?? 1000;
+        $pageSize = $request->query('pageSize') ?? 12;
         $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         if ($menu = $request->input('menu', '')) {
             $menu = (Category::query()->select('id')->where('value', $menu)->get())[0]['id'];
+            var_dump($menu);
             $permission = Post::query()
                 //菜单需要转换为id，单独判断
                 ->where('menu', 'like', '%[' . $menu . ',%')
                 ->orWhere('menu', 'like', '%,' . $menu . ']%')
                 ->orWhere('menu', 'like', ',%,' . $menu . ',%')
+                ->orWhere('menu', 'like', '%[' . $menu . ']%')
                 ->where($this->postFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+            var_dump($permission);
         } else {
             $permission = Post::query()
                 //菜单需要转换为id，单独判断

@@ -27,7 +27,7 @@ class CategoryService extends Service
     public function index($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
-        $pageSize = $request->query('pageSize') ?? 1000;
+        $pageSize = $request->query('pageSize') ?? 12;
         $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
@@ -60,7 +60,6 @@ class CategoryService extends Service
     {
         //获取验证数据
         $data = self::getValidatedData($request);
-        $data['son'] = isset($data['son']) ? json_encode($data['son']) : '';
 
         //创建内容
         try {
@@ -85,7 +84,6 @@ class CategoryService extends Service
     {
         //获取验证数据
         $data = self::getValidatedData($request);
-        $data['son'] = isset($data['son']) ? json_encode($data['son']) : '';
 
         //更新内容
         try {

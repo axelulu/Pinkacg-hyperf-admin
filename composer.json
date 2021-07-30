@@ -33,6 +33,7 @@
         "hyperf/redis": "~2.1.0",
         "hyperf/resource": "^2.1",
         "hyperf/validation": "^2.1",
+        "jaeger/querylist": "^4.2",
         "overtrue/flysystem-cos": "^3.0",
         "overtrue/flysystem-qiniu": "^1.0",
         "phper666/jwt-auth": "^3.0",
