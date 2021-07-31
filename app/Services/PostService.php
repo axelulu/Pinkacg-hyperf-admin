@@ -57,7 +57,7 @@ class PostService extends Service
             $post = Post::query()
                 //菜单需要转换为id，单独判断
                 ->where($this->postFilter->apply())
-                ->orderBy($orderBy, 'asc')
+                ->orderBy($orderBy, 'desc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
         }
 
