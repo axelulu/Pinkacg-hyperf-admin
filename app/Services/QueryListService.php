@@ -69,13 +69,19 @@ class QueryListService extends Service
                         ];
                         $rang = $data['postClass'];
                         $ql = QueryList::get($v['url'])->rules($reg)->range($rang)->query();
+
+                        //判断是否存在
+                        if (Post::query()->where('title', $ql->getData()[0]['title'])->get()->count() !== 0) {
+                            continue;
+                        }
+
                         $queryData = $ql->getData(function ($item) use ($data) {
                             //利用回调函数下载文章中的图片并替换图片路径为本地路径
                             $content = QueryList::html($item['content']);
                             $headerImg = $content->find('img')->map(function ($img) use ($data) {
-                                $src = $img->attr('data-srcset');
-                                if( $src && substr($src, 0, 7) !== "http://" && substr($src, 0, 8) !== "https://" ) {
-                                    $src = 'http://www.acganime.com' . $src;
+                                $src = $img->attr($data['postSrcUrlClass']);
+                                if ($src && substr($src, 0, 7) !== "http://" && substr($src, 0, 8) !== "https://") {
+                                    $src = $data['siteUrl'] . $src;
                                 }
                                 //文件名称
                                 $filename = md5(time() . $src) . '.jpg';
@@ -92,9 +98,7 @@ class QueryListService extends Service
                                         $stream
                                     );
                                 }
-                                $img->attr('src', 'https://img.catacg.cn/uploads/' . $fileSrc);
-                                $img->attr('data-srcset', 'https://img.catacg.cn/uploads/' . $fileSrc);
-                                $img->attr('srcset', 'https://img.catacg.cn/uploads/' . $fileSrc);
+                                $img->attr($data['postSrcUrlClass'], 'https://img.catacg.cn/uploads/' . $fileSrc);
                                 //删除本地文件
                                 unlink($fileLocalSrc);
                                 fclose($stream);
@@ -114,6 +118,9 @@ class QueryListService extends Service
                             return $item;
                         })->toArray();
 
+                        //获取文章id
+                        $postId = explode('/', $v['url']);
+                        $postId = $postId[count($postId) - 2];
                         //处理标签
                         if ($data['tag_status']) {
                             foreach ($queryData[0]['tag'] as $kk => $vv) {
@@ -130,6 +137,46 @@ class QueryListService extends Service
                         $queryData[0]['status'] = 'publish';
                         $queryData[0]['comment_status'] = 1;
                         $queryData[0]['download_status'] = $data['download_status'];
+                        if ($data['download_status']) {
+                            //获取下载内容
+                            $downloadData = QueryList::post('https://www.aidm12.com/wp-json/b2/v1/getDownloadData', [
+                                'post_id' => $postId
+                            ], [
+                                'headers' => [
+                                    'authorization' => 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvd3d3LmFpZG0xMi5jb20iLCJpYXQiOjE2Mjc2ODc4OTQsIm5iZiI6MTYyNzY4Nzg5NCwiZXhwIjoxNjI4MjkyNjk0LCJkYXRhIjp7InVzZXIiOnsiaWQiOiIyMjUzMTIifX19.3xIaqY_iDoMIP8sEPFq7vvmLhmGkiJ8FZ0GBk9eI7NU',
+                                    'Referer' => 'https://www.aidm12.com/download/?post_id=87344&index=0&i=2',
+                                    'User-Agent' => 'testing/1.0',
+                                    'Accept'     => 'application/json'
+                                ]
+                            ])->find('')->text();
+                            $downloadData = \Qiniu\json_decode($downloadData)[0]->button;
+
+                            foreach ($downloadData as $kkk => $vvv) {
+                                $downloadDataItem = QueryList::post('https://www.aidm12.com/wp-json/b2/v1/getDownloadPageData', [
+                                    'post_id' => $postId,
+                                    'index' => 0,
+                                    'i' => $kkk
+                                ], [
+                                    'headers' => [
+                                        'authorization' => 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvd3d3LmFpZG0xMi5jb20iLCJpYXQiOjE2Mjc2ODc4OTQsIm5iZiI6MTYyNzY4Nzg5NCwiZXhwIjoxNjI4MjkyNjk0LCJkYXRhIjp7InVzZXIiOnsiaWQiOiIyMjUzMTIifX19.3xIaqY_iDoMIP8sEPFq7vvmLhmGkiJ8FZ0GBk9eI7NU',
+                                        'Referer' => 'https://www.aidm12.com/download/?post_id=87344&index=0&i=2',
+                                        'User-Agent' => 'testing/1.0',
+                                        'Accept'     => 'application/json'
+                                    ]
+                                ])->find('')->text();
+                                $d = \Qiniu\json_decode($downloadDataItem)->button;
+                                $headers = get_headers('https://www.aidm12.com/redirect?token=' . $d->url, TRUE);
+                                $download[$kkk] = [
+                                    'name' => $d->name,
+                                    'link' => $headers['Location'][1],
+                                    'pwd' => $d->attr->tq,
+                                    'pwd2' => $d->attr->jy,
+                                    'credit' => 20
+                                ];
+                            }
+
+                            $queryData[0]['download'] = json_encode($download);
+                        }
                         if (!$queryData[0]['view']) {
                             $queryData[0]['view'] = 0;
                         }
@@ -138,7 +185,7 @@ class QueryListService extends Service
                         }
                         $result[$k] = $queryData[0];
                         Post::query()->create($result[$k]);
-                        sleep(2);
+                        sleep(1);
                     } else {
                         return $this->fail([
                             'data' => $result,
