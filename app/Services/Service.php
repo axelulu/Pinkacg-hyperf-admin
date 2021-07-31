@@ -170,10 +170,13 @@ abstract class Service
     /**
      * @param $data
      * @param $request
+     * @param $attachmentCat
      * @return mixed
      */
-    public function getDisplayColumnData($data, $request)
+    public function getDisplayColumnData($data, $request, $attachmentCat)
     {
+        $data = $data->toArray();
+        $attachmentCats = $attachmentCat->toArray();
         $exceptColumns = \Qiniu\json_decode($request->getAttribute('except_columns'));
         if (is_array($data)) {
             foreach ($data as $kk => $vv) {
@@ -184,7 +187,14 @@ abstract class Service
                 }
             }
         }
-        return $data;
+        //返回结果
+        return [
+            'pageSize' => $attachmentCats['per_page'],
+            'pageNo' => $attachmentCats['current_page'],
+            'totalCount' => $attachmentCats['total'],
+            'totalPage' => $attachmentCats['to'],
+            'data' => $data,
+        ];
     }
 
     /**

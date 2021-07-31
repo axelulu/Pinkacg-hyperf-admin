@@ -27,28 +27,17 @@ class AttachmentCatService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         try {
             $attachmentCat = AttachmentCat::query()
                 ->where($this->attachmentCatFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            $attachmentCats = $attachmentCat->toArray();
-            $data = self::getDisplayColumnData(AttachmentCatResource::collection($attachmentCat)->toArray(), $request);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
+            return $this->success(self::getDisplayColumnData(AttachmentCatResource::collection($attachmentCat), $request, $attachmentCat));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-
-        //返回结果
-        return $this->success([
-            'pageSize' => $attachmentCats['per_page'],
-            'pageNo' => $attachmentCats['current_page'],
-            'totalCount' => $attachmentCats['total'],
-            'totalPage' => $attachmentCats['to'],
-            'data' => $data,
-        ]);
     }
 
     /**

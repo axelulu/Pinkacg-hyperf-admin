@@ -40,40 +40,28 @@ class PostService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         if ($menu = $request->input('menu', '')) {
             $menu = (Category::query()->select('id')->where('value', $menu)->get())[0]['id'];
-            var_dump($menu);
-            $permission = Post::query()
+            $post = Post::query()
                 //菜单需要转换为id，单独判断
                 ->where('menu', 'like', '%[' . $menu . ',%')
                 ->orWhere('menu', 'like', '%,' . $menu . ']%')
                 ->orWhere('menu', 'like', ',%,' . $menu . ',%')
                 ->orWhere('menu', 'like', '%[' . $menu . ']%')
                 ->where($this->postFilter->apply())
-                ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            var_dump($permission);
+                ->orderBy($orderBy, 'desc')
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
         } else {
-            $permission = Post::query()
+            $post = Post::query()
                 //菜单需要转换为id，单独判断
                 ->where($this->postFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
         }
-        $permissions = $permission->toArray();
-        $data = self::getDisplayColumnData(PostResource::collection($permission)->toArray(), $request);
 
-        //返回结果
-        return $this->success([
-            'pageSize' => $permissions['per_page'],
-            'pageNo' => $permissions['current_page'],
-            'totalCount' => $permissions['total'],
-            'totalPage' => $permissions['to'],
-            'data' => $data,
-        ]);
+        return $this->success(self::getDisplayColumnData(PostResource::collection($post), $request, $post));
     }
 
     /**

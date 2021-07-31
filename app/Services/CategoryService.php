@@ -28,28 +28,17 @@ class CategoryService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         try {
             $category = Category::query()
                 ->where($this->categoryFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            $categorys = $category->toArray();
-            $data = self::getDisplayColumnData(CategoryResource::collection($category)->toArray(), $request);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
+            return $this->success(self::getDisplayColumnData(CategoryResource::collection($category), $request, $category));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-
-        //返回结果
-        return $this->success([
-            'pageSize' => $categorys['per_page'],
-            'pageNo' => $categorys['current_page'],
-            'totalCount' => $categorys['total'],
-            'totalPage' => $categorys['to'],
-            'data' => $data,
-        ]);
     }
 
     /**

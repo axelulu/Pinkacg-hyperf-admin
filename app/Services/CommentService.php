@@ -28,28 +28,17 @@ class CommentService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         try {
             $comment = Comment::query()
                 ->where($this->commentFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            $comments = $comment->toArray();
-            $data = self::getDisplayColumnData(CommentResource::collection($comment)->toArray(), $request);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
+            return $this->success(self::getDisplayColumnData(CommentResource::collection($comment), $request, $comment));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-
-        //返回结果
-        return $this->success([
-            'pageSize' => $comments['per_page'],
-            'pageNo' => $comments['current_page'],
-            'totalCount' => $comments['total'],
-            'totalPage' => $comments['to'],
-            'data' => $data,
-        ]);
     }
 
     /**

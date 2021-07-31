@@ -31,24 +31,33 @@ class QuestionService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $answer = $request->input('answer', 0);
-        $pageSize = $request->query('pageSize') ?? 1000;
-        $pageNo = $request->query('pageNo') ?? 1;
+        $pageSize = $request->query('pageSize') ?? 12;
 
         //获取数据
         try {
             $question = Question::query()
                 ->where($this->questionFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
             $questions = $question->toArray();
-
-            // 验证
-            $data = self::getDisplayColumnData(AdminQuestionResource::collection($question)->toArray(), $request);
 
             //当前用户得数
             $userId = $JWT->getParserData()['id'];
             $grade = (User::query()->select('answertest')->where('id', $userId)->get())[0]['answertest'];
 
+            // 验证
+            $data = AdminQuestionResource::collection($question)->toArray();
+
+            $exceptColumns = \Qiniu\json_decode($request->getAttribute('except_columns'));
+            if (is_array($data)) {
+                foreach ($data as $kk => $vv) {
+                    if (is_array($exceptColumns)) {
+                        foreach ($exceptColumns as $k => $v) {
+                            unset($data[$kk][$v]);
+                        }
+                    }
+                }
+            }
             //前台访问
             if ($answer && $grade === -1) {
                 $len = count($data);

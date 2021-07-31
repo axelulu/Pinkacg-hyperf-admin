@@ -27,28 +27,17 @@ class MenuPermissionService extends Service
     {
         $orderBy = $request->input('orderBy', 'sort');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         try {
             $menu = AdminPermission::query()
                 ->where($this->menuFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            $menus = $menu->toArray();
-            $data = self::getDisplayColumnData(MenuPermissionResource::collection($menu)->toArray(), $request);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
+            return $this->success(self::getDisplayColumnData(MenuPermissionResource::collection($menu), $request, $menu));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-
-        //返回结果
-        return $this->success([
-            'pageSize' => $menus['per_page'],
-            'pageNo' => $menus['current_page'],
-            'totalCount' => $menus['total'],
-            'totalPage' => $menus['to'],
-            'data' => $data,
-        ]);
     }
 
     /**

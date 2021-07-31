@@ -25,28 +25,17 @@ class AttachmentService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         try {
             $attachment = Attachment::query()
                 ->where($this->attachmentFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            $attachments = $attachment->toArray();
-            $data = self::getDisplayColumnData(AttachmentResource::collection($attachment)->toArray(), $request);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
+            return $this->success(self::getDisplayColumnData(AttachmentResource::collection($attachment), $request, $attachment));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-
-        //返回结果
-        return $this->success([
-            'pageSize' => $attachments['per_page'],
-            'pageNo' => $attachments['current_page'],
-            'totalCount' => $attachments['total'],
-            'totalPage' => $attachments['to'],
-            'data' => $data,
-        ]);
     }
 
     /**

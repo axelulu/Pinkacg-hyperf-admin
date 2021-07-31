@@ -32,21 +32,13 @@ class UserService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         $user = User::query()
             ->where($this->userFilter->apply())
             ->orderBy($orderBy, 'asc')
-            ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-        $users = $user->toArray();
+            ->paginate((int)$pageSize, ['*'], 'pageNo');
+        return $this->success(self::getDisplayColumnData(UserResource::collection($user), $request, $user));
 
-        return $this->success([
-            'pageSize' => $users['per_page'],
-            'pageNo' => $users['current_page'],
-            'totalCount' => $users['total'],
-            'totalPage' => $users['to'],
-            'data' => self::getDisplayColumnData(UserResource::collection($user)->toArray(), $request),
-        ]);
     }
 
     /**

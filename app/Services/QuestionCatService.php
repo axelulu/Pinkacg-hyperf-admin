@@ -27,28 +27,17 @@ class QuestionCatService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         try {
             $questionCat = QuestionCat::query()
                 ->where($this->questionCatFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            $questionCats = $questionCat->toArray();
-            $data = self::getDisplayColumnData(QuestionCatResource::collection($questionCat)->toArray(), $request);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
+            return $this->success(self::getDisplayColumnData(QuestionCatResource::collection($questionCat), $request, $questionCat));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-
-        //返回结果
-        return $this->success([
-            'pageSize' => $questionCats['per_page'],
-            'pageNo' => $questionCats['current_page'],
-            'totalCount' => $questionCats['total'],
-            'totalPage' => $questionCats['to'],
-            'data' => $data,
-        ]);
     }
 
     /**

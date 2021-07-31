@@ -26,27 +26,16 @@ class RoleService extends Service
     public function index($request): ResponseInterface
     {
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取内容
         try {
             $role = AdminRole::query()
                 ->where($this->roleFilter->apply())
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            $roles = $role->toArray();
-            $data = self::getDisplayColumnData(RoleResource::collection($role)->toArray(), $request);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
+            return $this->success(self::getDisplayColumnData(RoleResource::collection($role), $request, $role));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-
-        //返回结果
-        return $this->success([
-            'pageSize' => $roles['per_page'],
-            'pageNo' => $roles['current_page'],
-            'totalCount' => $roles['total'],
-            'totalPage' => $roles['to'],
-            'data' => $data,
-        ]);
     }
 
     /**

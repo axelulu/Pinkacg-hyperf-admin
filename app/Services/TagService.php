@@ -27,28 +27,17 @@ class TagService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         try {
             $tag = Tag::query()
                 ->where($this->tagFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            $tags = $tag->toArray();
-            $data = self::getDisplayColumnData(TagResource::collection($tag)->toArray(), $request);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
+            return $this->success(self::getDisplayColumnData(TagResource::collection($tag), $request, $tag));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-
-        //返回结果
-        return $this->success([
-            'pageSize' => $tags['per_page'],
-            'pageNo' => $tags['current_page'],
-            'totalCount' => $tags['total'],
-            'totalPage' => $tags['to'],
-            'data' => $data,
-        ]);
     }
 
     /**

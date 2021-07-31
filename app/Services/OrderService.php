@@ -29,28 +29,17 @@ class OrderService extends Service
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
-        $pageNo = $request->query('pageNo') ?? 1;
 
         //获取数据
         try {
             $order = Order::query()
                 ->where($this->orderFilter->apply())
                 ->orderBy($orderBy, 'asc')
-                ->paginate((int)$pageSize, ['*'], 'page', (int)$pageNo);
-            $orders = $order->toArray();
-            $data = self::getDisplayColumnData(OrderResource::collection($order)->toArray(), $request);
+                ->paginate((int)$pageSize, ['*'], 'pageNo');
+            return $this->success(self::getDisplayColumnData(OrderResource::collection($order), $request, $order));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
-
-        //返回结果
-        return $this->success([
-            'pageSize' => $orders['per_page'],
-            'pageNo' => $orders['current_page'],
-            'totalCount' => $orders['total'],
-            'totalPage' => $orders['to'],
-            'data' => $data,
-        ]);
     }
 
     /**
