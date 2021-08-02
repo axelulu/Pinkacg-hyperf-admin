@@ -23,7 +23,7 @@ class AttachmentCatService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function index($request): ResponseInterface
+    public function attachment_cat_query($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
@@ -44,7 +44,7 @@ class AttachmentCatService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function create($request): ResponseInterface
+    public function attachment_cat_create($request): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -68,7 +68,7 @@ class AttachmentCatService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function update($request, $id): ResponseInterface
+    public function attachment_cat_update($request, $id): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -91,7 +91,7 @@ class AttachmentCatService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function delete($id): ResponseInterface
+    public function attachment_cat_delete($id): ResponseInterface
     {
         //删除分类
         try {

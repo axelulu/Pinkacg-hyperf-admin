@@ -234,7 +234,7 @@ abstract class Service
     {
         // 转移文件
         if (isset($file['id'])) {
-            $cat_name = \Qiniu\json_decode((Setting::query()->where([['name', 'site_meta']])->get())[0]['value'])->$catType;
+            $cat_name = \Qiniu\json_decode(Setting::query()->where([['name', 'site_meta']])->first()['value'])->$catType;
             if ($catType === 'user_attachment') {
                 $file['user_id'] = $id;
             } elseif ($catType === 'post_attachment') {

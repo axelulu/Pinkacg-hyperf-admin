@@ -14,7 +14,7 @@ class SettingService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function index($id): ResponseInterface
+    public function setting_query($id): ResponseInterface
     {
         //获取内容
         try {
@@ -32,11 +32,32 @@ class SettingService extends Service
     }
 
     /**
+     * @param $id
+     * @param $key
+     * @return ResponseInterface
+     */
+    public function setting_query_key($id, $key): ResponseInterface
+    {
+        //获取内容
+        try {
+            $setting_query_key = Setting::query()->where([
+                ['name', $id]
+            ])->first()->toArray();
+            $data = [
+                'data' => \Qiniu\json_decode($setting_query_key['value'])->$key,
+            ];
+            return $this->success($data);
+        } catch (\Throwable $throwable) {
+            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+        }
+    }
+
+    /**
      * @param $request
      * @param $id
      * @return ResponseInterface
      */
-    public function update($request, $id): ResponseInterface
+    public function setting_update($request, $id): ResponseInterface
     {
         // 验证
         $data = $request->validated();

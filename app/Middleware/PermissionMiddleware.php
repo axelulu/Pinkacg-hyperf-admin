@@ -62,14 +62,6 @@ class PermissionMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $user = $this->JWT->getParserData();
-        //获取请求的路径
-        $path = $this->request->path();
-        //获取请求权限路径
-        $requestPermissionPath = substr($path, 0, strpos($path, '/', strpos($path, '/') + 1));
-        $allPermission = AdminPermission::query()->select('id', 'method', 'key')->where('path', $requestPermissionPath)->get()->toArray();
-        //获取请求方法
-        $requestMethod = $this->request->getMethod();
-
         //判断是否拥有管理员权限
         $adminPermission = AdminPermission::query()->select('id')->where([
             'name' => 'ALL',
@@ -86,15 +78,23 @@ class PermissionMiddleware implements MiddlewareInterface
             }
         }
 
+        //----------------------------------------------------------------------------------------------------------------------------------------------//
+
+        //获取请求的路径
+        $path = $this->request->path();
+        var_dump($path);
+        $permission = AdminPermission::query()->select('id', 'method', 'key')->where('url', $path)->first()->toArray();
+        //获取请求方法
+        $method = $this->request->getMethod();
+
         //判断是否拥有普通权限
-        foreach ($allPermission as $k => $v) {
-            if (in_array($requestMethod, json_decode($allPermission[$k]['method']))) {
-                $userPermission = Db::table('casbin_rules')->where(['v3' => $v['id'], 'ptype' => 'p'])->get();
-                foreach ($userPermission as $kk => $vv) {
-                    if (Db::table('casbin_rules')->where(['v0' => 'roles_' . $user['id'], 'v1' => substr($vv->v0, 11, 1)])->get()->count()) {
-                        $request = $request->withAttribute('except_columns', $allPermission[$k]['key']);
-                        return $handler->handle($request);
-                    }
+        if (in_array($method, \Qiniu\json_decode($permission['method']))) {
+            $userPermission = Db::table('casbin_rules')->where(['v3' => $permission['id'], 'ptype' => 'p'])->get();
+            foreach ($userPermission as $k => $v) {
+                if (Db::table('casbin_rules')->where(['v0' => 'roles_' . $user['id'], 'v1' => substr($v->v0, 11, 1)])->get()->count()) {
+                    //无权访问的字段
+                    $request = $request->withAttribute('except_columns', $permission['key']);
+                    return $handler->handle($request);
                 }
             }
         }

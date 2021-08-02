@@ -37,8 +37,8 @@ class PostRequest extends FormRequest
             'tag' => 'required|array',
             'download_status' => 'required|boolean',
             'download' => 'array',
-            'music' => 'array',
-            'video' => 'array',
+            'music' => 'array|nullable',
+            'video' => 'array|nullable',
             'views' => 'integer',
             'header_img' => 'required',
         ];

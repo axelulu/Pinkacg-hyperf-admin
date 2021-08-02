@@ -11,7 +11,7 @@ use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 
@@ -25,28 +25,28 @@ class OrderController extends AbstractController
     /**
      * @param OrderService $orderService
      * @return ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @RequestMapping(path="order_query", methods="get")
      */
-    public function index(OrderService $orderService): ResponseInterface
+    public function order_query(OrderService $orderService): ResponseInterface
     {
         //交给service处理
-        return $orderService->index($this->request);
+        return $orderService->order_query($this->request);
     }
 
     /**
      * @param OrderService $orderService
      * @param OrderRequest $request
      * @return ResponseInterface
-     * @RequestMapping(path="create", methods="post")
+     * @RequestMapping(path="order_create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(OrderService $orderService, OrderRequest $request): ResponseInterface
+    public function order_create(OrderService $orderService, OrderRequest $request): ResponseInterface
     {
         //交给service处理
-        return $orderService->create($request);
+        return $orderService->order_create($request);
     }
 
     /**
@@ -54,47 +54,31 @@ class OrderController extends AbstractController
      * @param OrderRequest $request
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="update/{id}", methods="put")
+     * @RequestMapping(path="order_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(OrderService $orderService, OrderRequest $request, int $id): ResponseInterface
+    public function order_update(OrderService $orderService, OrderRequest $request): ResponseInterface
     {
         //交给service处理
-        return $orderService->update($request, $id);
+        return $orderService->order_update($request, $this->request->input('id', -1));
     }
 
     /**
      * @param OrderService $orderService
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="delete/{id}", methods="delete")
+     * @RequestMapping(path="order_delete", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(OrderService $orderService, int $id): ResponseInterface
+    public function order_delete(OrderService $orderService): ResponseInterface
     {
         //交给service处理
-        return $orderService->delete($id);
-    }
-
-    /**
-     * @param OrderService $orderService
-     * @param int $id
-     * @return ResponseInterface
-     * @RequestMapping(path="/admin/purchase/create", methods="post")
-     * @Middlewares({
-     *     @Middleware(JWTAuthMiddleware::class),
-     *     @Middleware(PermissionMiddleware::class)
-     * })
-     */
-    public function purchase(OrderService $orderService)
-    {
-        //交给service处理
-        return $orderService->purchase($this->request);
+        return $orderService->order_delete($this->request->input('id', -1));
     }
 }

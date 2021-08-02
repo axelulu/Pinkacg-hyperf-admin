@@ -21,7 +21,7 @@ class AttachmentService extends Service
      */
     protected $attachmentFilter;
 
-    public function index($request): ResponseInterface
+    public function attachment_query($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
@@ -42,7 +42,7 @@ class AttachmentService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function create($request): ResponseInterface
+    public function attachment_create($request): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -73,13 +73,13 @@ class AttachmentService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function update($request): ResponseInterface
+    public function attachment_update($request, $id): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
 
         //获取老文件
-        $oldFile = Attachment::query()->where('id', $data['id'])->first()->toArray();
+        $oldFile = Attachment::query()->where('id', $id)->first()->toArray();
         $oldFile = 'uploads/' . $oldFile['path'] . $oldFile['filename'] . '.' . $oldFile['type'];
 
         try {
@@ -100,7 +100,7 @@ class AttachmentService extends Service
                 $data['newFile']['post_id'] = $data['post_id'];
                 Attachment::query()->where('id', $data['newFile']['id'])->delete();
                 unset($data['newFile']['id']);
-                $flag = Attachment::query()->where('id', $data['id'])->update($data['newFile']);
+                $flag = Attachment::query()->where('id', $id)->update($data['newFile']);
             } else {
                 //更新信息转移附件
                 $newFile = 'uploads/' . $data['cat'] . '/' . $data['user_id'] . '/' . $data['post_id'] . '/' . $data['filename'] . '.' . $data['type'];
@@ -109,7 +109,7 @@ class AttachmentService extends Service
                     $this->filesystem->delete($oldFile);
                     $data['path'] = $data['cat'] . '/' . $data['user_id'] . '/' . $data['post_id'] . '/';
                 }
-                $flag = Attachment::query()->where('id', $data['id'])->update($data);
+                $flag = Attachment::query()->where('id', $id)->update($data);
             }
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
@@ -128,7 +128,7 @@ class AttachmentService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function delete($request, $filesystem, $id): ResponseInterface
+    public function attachment_delete($request, $filesystem, $id): ResponseInterface
     {
         // 验证
         $data = $request->validated();

@@ -12,7 +12,7 @@ use Psr\Http\Message\ResponseInterface;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 
@@ -27,56 +27,56 @@ class UserController extends AbstractController
      * @param UserService $userService
      * @param JWT $JWT
      * @return ResponseInterface
-     * @RequestMapping(path="nav", methods="get")
+     * @RequestMapping(path="user_nav", methods="get")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class)
      * })
      */
-    public function nav(UserService $userService, JWT $JWT): ResponseInterface
+    public function user_nav(UserService $userService, JWT $JWT): ResponseInterface
     {
-        return $userService->nav($JWT);
+        return $userService->user_nav($JWT);
     }
 
     /**
      * @param UserService $userService
      * @param JWT $JWT
      * @return ResponseInterface
-     * @RequestMapping(path="info", methods="get")
+     * @RequestMapping(path="user_info", methods="get")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class)
      * })
      */
-    public function info(UserService $userService, JWT $JWT): ResponseInterface
+    public function user_info(UserService $userService, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->info($JWT);
+        return $userService->user_info($JWT);
     }
 
     /**
      * @param UserService $userService
      * @return ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @RequestMapping(path="user_query", methods="get")
      */
-    public function index(UserService $userService): ResponseInterface
+    public function user_query(UserService $userService): ResponseInterface
     {
         //交给service处理
-        return $userService->index($this->request);
+        return $userService->user_query($this->request);
     }
 
     /**
      * @param UserService $userService
      * @param UserRequest $userRequest
      * @return ResponseInterface
-     * @RequestMapping(path="create", methods="post")
+     * @RequestMapping(path="user_create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(UserService $userService, UserRequest $userRequest): ResponseInterface
+    public function user_create(UserService $userService, UserRequest $userRequest): ResponseInterface
     {
         //交给service处理
-        return $userService->create($userRequest);
+        return $userService->user_create($userRequest);
     }
 
     /**
@@ -85,16 +85,16 @@ class UserController extends AbstractController
      * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
-     * @RequestMapping(path="update/{id}", methods="put")
+     * @RequestMapping(path="user_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(UserService $userService, UserRequest $userRequest, int $id, JWT $JWT): ResponseInterface
+    public function user_update(UserService $userService, UserRequest $userRequest, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->update($userRequest, $id, $JWT);
+        return $userService->user_update($userRequest, $this->request->input('id', -1), $JWT);
     }
 
     /**
@@ -102,99 +102,96 @@ class UserController extends AbstractController
      * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
-     * @RequestMapping(path="updateUserAvatar/{id}", methods="put")
+     * @RequestMapping(path="user_update_avatar", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserAvatar(UserService $userService, int $id, JWT $JWT): ResponseInterface
+    public function user_update_avatar(UserService $userService, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->updateUserAvatar($this->request, $id, $JWT);
+        return $userService->user_update_avatar($this->request, $this->request->input('id', -1), $JWT);
     }
 
     /**
      * @param UserService $userService
-     * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
-     * @RequestMapping(path="updateUserInfo/{id}", methods="put")
+     * @RequestMapping(path="user_update_info", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserInfo(UserService $userService, int $id, JWT $JWT): ResponseInterface
+    public function user_update_info(UserService $userService, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->updateUserInfo($this->request, $id, $JWT);
+        return $userService->user_update_info($this->request, $this->request->input('id', -1), $JWT);
     }
 
     /**
      * @param UserService $userService
-     * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
-     * @RequestMapping(path="updateUserEmail/{id}", methods="post")
+     * @RequestMapping(path="user_update_email", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserEmail(UserService $userService, int $id, JWT $JWT): ResponseInterface
+    public function user_update_email(UserService $userService, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->updateUserEmail($this->request, $id, $JWT);
+        return $userService->user_update_email($this->request, $this->request->input('id', -1), $JWT);
     }
 
     /**
      * @param UserService $userService
-     * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
-     * @RequestMapping(path="sendChangeMail/{id}", methods="post")
+     * @RequestMapping(path="user_send_email", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function sendUserMail(UserService $userService, int $id, JWT $JWT): ResponseInterface
+    public function user_send_email(UserService $userService, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->sendUserMail($this->request, $id, $JWT);
+        return $userService->user_send_email($this->request, $this->request->input('id', -1), $JWT);
     }
 
     /**
      * @param UserService $userService
-     * @param int $id
      * @param JWT $JWT
      * @return ResponseInterface
-     * @RequestMapping(path="updateUserPassword/{id}", methods="put")
+     * @RequestMapping(path="user_update_password", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function updateUserPassword(UserService $userService, int $id, JWT $JWT): ResponseInterface
+    public function user_update_password(UserService $userService, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->updateUserPassword($this->request, $id, $JWT);
+        return $userService->user_update_password($this->request, $this->request->input('id', -1), $JWT);
     }
 
     /**
      * @param UserService $userService
-     * @param int $id
+     * @param UserRequest $userRequest
+     * @param JWT $JWT
      * @return ResponseInterface
-     * @RequestMapping(path="delete/{id}", methods="delete")
+     * @RequestMapping(path="user_delete", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(UserService $userService, UserRequest $userRequest, int $id, JWT $JWT): ResponseInterface
+    public function user_delete(UserService $userService, UserRequest $userRequest, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $userService->delete($userRequest, $id, $JWT);
+        return $userService->user_delete($userRequest, $this->request->input('id', -1), $JWT);
     }
 }

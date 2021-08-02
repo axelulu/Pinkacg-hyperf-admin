@@ -7,11 +7,11 @@ namespace App\Services;
 use App\Exception\RequestException;
 use App\Filters\MenuFilter;
 use App\Model\AdminPermission;
-use App\Resource\admin\MenuPermissionResource;
+use App\Resource\admin\PermissionResource;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
 
-class MenuPermissionService extends Service
+class PermissionService extends Service
 {
     /**
      * @Inject
@@ -23,7 +23,7 @@ class MenuPermissionService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function index($request): ResponseInterface
+    public function permission_query($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'sort');
         $pageSize = $request->query('pageSize') ?? 12;
@@ -34,7 +34,7 @@ class MenuPermissionService extends Service
                 ->where($this->menuFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(MenuPermissionResource::collection($menu), $request, $menu));
+            return $this->success(self::getDisplayColumnData(PermissionResource::collection($menu), $request, $menu));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
@@ -44,7 +44,7 @@ class MenuPermissionService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function create($request): ResponseInterface
+    public function permission_create($request): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -68,7 +68,7 @@ class MenuPermissionService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function update($request, $id): ResponseInterface
+    public function permission_update($request, $id): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -91,11 +91,12 @@ class MenuPermissionService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function delete($id): ResponseInterface
+    public function permission_delete($id): ResponseInterface
     {
         try {
             //存在子菜单
-            if (AdminPermission::query()->where('p_id', $id)) {
+            var_dump($id);
+            if (AdminPermission::query()->where('p_id', $id)->count() > 0) {
                 return $this->fail([], '存在子菜单');
             }
             //有用户选择此菜单

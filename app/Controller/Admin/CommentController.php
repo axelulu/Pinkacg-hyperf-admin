@@ -12,7 +12,7 @@ use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
 use Phper666\JWTAuth\JWT;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 
@@ -26,46 +26,28 @@ class CommentController extends AbstractController
     /**
      * @param CommentService $commentService
      * @return ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @RequestMapping(path="comment_query", methods="get")
      */
-    public function index(CommentService $commentService): ResponseInterface
+    public function comment_query(CommentService $commentService): ResponseInterface
     {
         //交给service处理
-        return $commentService->index($this->request);
+        return $commentService->comment_query($this->request);
     }
 
     /**
      * @param CommentService $commentService
      * @param CommentRequest $request
      * @return ResponseInterface
-     * @RequestMapping(path="create", methods="post")
+     * @RequestMapping(path="comment_create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(CommentService $commentService, CommentRequest $request): ResponseInterface
+    public function comment_create(CommentService $commentService, CommentRequest $request): ResponseInterface
     {
         //交给service处理
-        return $commentService->create($request);
-    }
-
-    /**
-     * @param CommentService $commentService
-     * @param JWT $JWT
-     * @param CommentRequest $request
-     * @param int $id
-     * @return ResponseInterface
-     * @RequestMapping(path="update/{id}", methods="put")
-     * @Middlewares({
-     *     @Middleware(JWTAuthMiddleware::class),
-     *     @Middleware(PermissionMiddleware::class)
-     * })
-     */
-    public function update(CommentService $commentService, JWT $JWT, CommentRequest $request, int $id): ResponseInterface
-    {
-        //交给service处理
-        return $commentService->update($request, $JWT, $id);
+        return $commentService->comment_create($request);
     }
 
     /**
@@ -74,15 +56,33 @@ class CommentController extends AbstractController
      * @param CommentRequest $request
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="delete/{id}", methods="delete")
+     * @RequestMapping(path="comment_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(CommentService $commentService, JWT $JWT, CommentRequest $request, int $id): ResponseInterface
+    public function comment_update(CommentService $commentService, JWT $JWT, CommentRequest $request): ResponseInterface
     {
         //交给service处理
-        return $commentService->delete($request, $JWT, $id);
+        return $commentService->comment_update($request, $JWT, $this->request->input('id', -1));
+    }
+
+    /**
+     * @param CommentService $commentService
+     * @param JWT $JWT
+     * @param CommentRequest $request
+     * @param int $id
+     * @return ResponseInterface
+     * @RequestMapping(path="comment_delete", methods="delete")
+     * @Middlewares({
+     *     @Middleware(JWTAuthMiddleware::class),
+     *     @Middleware(PermissionMiddleware::class)
+     * })
+     */
+    public function comment_delete(CommentService $commentService, JWT $JWT, CommentRequest $request): ResponseInterface
+    {
+        //交给service处理
+        return $commentService->comment_delete($request, $JWT, $this->request->input('id', -1));
     }
 }

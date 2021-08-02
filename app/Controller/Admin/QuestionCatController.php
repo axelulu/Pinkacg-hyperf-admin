@@ -12,7 +12,7 @@ use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 
 /**
@@ -25,28 +25,28 @@ class QuestionCatController extends AbstractController
     /**
      * @param QuestionCatService $questionCatService
      * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @RequestMapping(path="question_cat_query", methods="get")
      */
-    public function index(QuestionCatService $questionCatService): \Psr\Http\Message\ResponseInterface
+    public function question_cat_query(QuestionCatService $questionCatService): \Psr\Http\Message\ResponseInterface
     {
         //交给service处理
-        return $questionCatService->index($this->request);
+        return $questionCatService->question_cat_query($this->request);
     }
 
     /**
      * @param QuestionCatService $questionCatService
      * @param QuestionCatRequest $request
      * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="create", methods="post")
+     * @RequestMapping(path="question_cat_create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(QuestionCatService $questionCatService, QuestionCatRequest $request): \Psr\Http\Message\ResponseInterface
+    public function question_cat_create(QuestionCatService $questionCatService, QuestionCatRequest $request): \Psr\Http\Message\ResponseInterface
     {
         //交给service处理
-        return $questionCatService->create($request);
+        return $questionCatService->question_cat_create($request);
     }
 
     /**
@@ -54,31 +54,31 @@ class QuestionCatController extends AbstractController
      * @param QuestionCatRequest $request
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="update/{id}", methods="put")
+     * @RequestMapping(path="question_cat_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(QuestionCatService $questionCatService, QuestionCatRequest $request, int $id): \Psr\Http\Message\ResponseInterface
+    public function question_cat_update(QuestionCatService $questionCatService, QuestionCatRequest $request): \Psr\Http\Message\ResponseInterface
     {
         //交给service处理
-        return $questionCatService->update($request, $id);
+        return $questionCatService->question_cat_update($request, $this->request->input('id', -1));
     }
 
     /**
      * @param QuestionCatService $questionCatService
      * @param int $id
      * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="delete/{id}", methods="delete")
+     * @RequestMapping(path="question_cat_delete", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(QuestionCatService $questionCatService, int $id): \Psr\Http\Message\ResponseInterface
+    public function question_cat_delete(QuestionCatService $questionCatService): \Psr\Http\Message\ResponseInterface
     {
         //交给service处理
-        return $questionCatService->delete($id);
+        return $questionCatService->question_cat_delete($this->request->input('id', -1));
     }
 }

@@ -12,7 +12,7 @@ use \League\Flysystem\Filesystem;
 use Psr\Http\Message\ResponseInterface;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
@@ -29,16 +29,16 @@ class UploadController extends AbstractController
      * @param UploadRequest $request
      * @param Filesystem $filesystem
      * @return ResponseInterface
-     * @RequestMapping(path="/admin/uploadImgFile/create", methods="post")
+     * @RequestMapping(path="upload_img", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function uploadImgFile(UploadService $uploadService, UploadRequest $request, Filesystem $filesystem): ResponseInterface
+    public function upload_img(UploadService $uploadService, UploadRequest $request, Filesystem $filesystem): ResponseInterface
     {
         //交给service处理
-        return $uploadService->uploadImgFile($request, $filesystem);
+        return $uploadService->upload_img($request, $filesystem);
     }
 
     /**
@@ -46,15 +46,15 @@ class UploadController extends AbstractController
      * @param UploadRequest $request
      * @param Filesystem $filesystem
      * @return ResponseInterface
-     * @RequestMapping(path="/admin/uploadSiteMeta/create", methods="post")
+     * @RequestMapping(path="upload_setting", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function uploadSiteMeta(UploadService $uploadService, UploadRequest $request, Filesystem $filesystem): ResponseInterface
+    public function upload_setting(UploadService $uploadService, UploadRequest $request, Filesystem $filesystem): ResponseInterface
     {
         //交给service处理
-        return $uploadService->uploadSiteMeta($request, $filesystem);
+        return $uploadService->upload_setting($request, $filesystem);
     }
 }

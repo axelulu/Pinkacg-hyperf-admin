@@ -11,7 +11,7 @@ use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 
@@ -25,16 +25,16 @@ class QueryListController extends AbstractController
     /**
      * @param QueryListService $tagService
      * @return ResponseInterface
-     * @RequestMapping(path="index", methods="post")
+     * @RequestMapping(path="query_list_query", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function index(QueryListService $tagService): ResponseInterface
+    public function query_list_query(QueryListService $tagService): ResponseInterface
     {
         //交给service处理
-        return $tagService->index($this->request);
+        return $tagService->query_list_query($this->request);
     }
 
 }

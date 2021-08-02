@@ -21,7 +21,7 @@ return [
         'private' => env('JWT_PRIVATE_KEY'), // 私钥，例如：'file:///path/to/private/key'
     ],
 
-    'ttl' => env('JWT_TTL', 7200), // token过期时间，单位为秒
+    'ttl' => env('JWT_TTL', 86400), // token过期时间，单位为秒
 
     'alg' => env('JWT_ALG', 'HS256'), // jwt的hearder加密算法
 

@@ -39,7 +39,7 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'author' => $this->author,
-            'authorMeta' => (User::query()->select('name', 'id', 'avatar', 'credit', 'desc', 'background')->where('id', $this->author)->get()->toArray())[0],
+            'authorMeta' => User::query()->select('name', 'id', 'avatar', 'credit', 'desc', 'background')->where('id', $this->author)->first()->toArray(),
             'title' => $this->title,
             'content' => $this->content,
             'content_file' => AttachmentPostContentResource::collection(Attachment::query()->where([['user_id', $this->author], ['post_id', $this->id]])->get()),
@@ -57,6 +57,7 @@ class PostResource extends JsonResource
             'music' => json_decode($this->music),
             'video' => json_decode($this->video),
             'views' => (int) $this->views,
+            'credit' => (int) $this->credit,
             'header_img' => $this->header_img,
             'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
         ];

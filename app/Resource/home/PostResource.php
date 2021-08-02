@@ -38,7 +38,7 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'author' => $this->author,
-            'authorMeta' => (User::query()->select('name', 'id', 'avatar', 'credit', 'desc', 'background')->where('id', $this->author)->get()->toArray())[0],
+            'authorMeta' => User::query()->select('name', 'id', 'avatar', 'credit', 'desc', 'background')->where('id', $this->author)->first()->toArray(),
             'title' => $this->title,
             'content' => $this->content,
             'content_file' => AttachmentPostContentResource::collection(Attachment::query()->where([['user_id', $this->author], ['post_id', $this->id]])->get()),

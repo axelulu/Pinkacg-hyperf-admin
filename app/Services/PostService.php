@@ -7,15 +7,15 @@ use App\Exception\RequestException;
 use App\Filters\PostFilter;
 use App\Model\Category;
 use App\Model\Comment;
+use App\Model\Order;
 use App\Model\Post;
 use App\Model\Tag;
-use App\Request\home\PostRequest;
+use App\Model\User;
+use App\Request\admin\PostRequest;
 use App\Resource\admin\PostResource;
 use Hyperf\Di\Annotation\Inject;
-use Hyperf\Utils\Context;
 use Phper666\JWTAuth\JWT;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use function PHPUnit\Framework\isNull;
 
 class PostService extends Service
@@ -36,14 +36,14 @@ class PostService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function index($request): ResponseInterface
+    public function post_query($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
 
         //获取数据
         if ($menu = $request->input('menu', '')) {
-            $menu = (Category::query()->select('id')->where('value', $menu)->get())[0]['id'];
+            $menu = Category::query()->select('id')->where('value', $menu)->first()['id'];
             $post = Post::query()
                 //菜单需要转换为id，单独判断
                 ->where('menu', 'like', '%[' . $menu . ',%')
@@ -68,7 +68,7 @@ class PostService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function create($request): ResponseInterface
+    public function post_create($request): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -131,11 +131,11 @@ class PostService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function update($request, JWT $JWT, $id): ResponseInterface
+    public function post_update($request, JWT $JWT, $id): ResponseInterface
     {
         try {
             //判断是否是JWT用户
-            $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+            $postAuthorId = Post::query()->select('author')->where('id', $id)->first()->toArray()['author'];
             if (!self::isJWTUser($request, $JWT->getParserData()['id'], $postAuthorId)) {
                 return $this->fail([], '用户id错误');
             }
@@ -179,11 +179,11 @@ class PostService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function delete($request, $JWT, $id): ResponseInterface
+    public function post_delete($request, $JWT, $id): ResponseInterface
     {
         try {
             //判断是否是JWT用户
-            $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+            $postAuthorId = Post::query()->select('author')->where('id', $id)->first()->toArray()['author'];
             if (!self::isJWTUser($request, $JWT->getParserData()['id'], $postAuthorId)) {
                 return $this->fail([], '用户id错误');
             }
@@ -200,6 +200,47 @@ class PostService extends Service
         //返回结果
         if ($flag) {
             return $this->success();
+        }
+        return $this->fail();
+    }
+
+    /**
+     * @param $request
+     * @return ResponseInterface
+     */
+    public function post_purchase($request): ResponseInterface
+    {
+        $data = $request->all();
+
+        if (isset($data['credit']) && isset($data['download_key']) && isset($data['post_id']) && isset($data['user_id'])) {
+            //购买文章
+            try {
+                //判断积分
+                $credit = User::query()->select('credit')->where('id', $data['user_id'])->first()['credit'];
+                if ($credit < $data['credit'] || $credit <= 0) {
+                    return $this->fail([], '积分不够');
+                }
+
+                $flag = Order::query()->insert([
+                    'user_id' => $data['user_id'],
+                    'post_id' => $data['post_id'],
+                    'type' => 'post',
+                    'download_key' => $data['download_key'],
+                    'credit' => $data['credit'],
+                ]);
+
+                //扣取积分
+                $credit = $credit - $data['credit'];
+                User::query()->where('id', $data['user_id'])->update([
+                    'credit' => $credit
+                ]);
+                if ($flag) {
+                    $download = \Qiniu\json_decode(Post::query()->select('download')->where('id', $data['post_id'])->first()->toArray()['download'])[$data['download_key']];
+                    return $this->success(['data' => $download]);
+                }
+            } catch (\Throwable $throwable) {
+                throw new RequestException($throwable->getMessage(), $throwable->getCode());
+            }
         }
         return $this->fail();
     }

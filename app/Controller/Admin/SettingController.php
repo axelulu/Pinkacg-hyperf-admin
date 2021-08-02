@@ -11,7 +11,7 @@ use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 
@@ -26,12 +26,24 @@ class SettingController extends AbstractController
      * @param SettingService $settingService
      * @param string $id
      * @return ResponseInterface
-     * @RequestMapping(path="/admin/site_{id}/index", methods="get")
+     * @RequestMapping(path="{slug}/setting_query", methods="get")
      */
-    public function index(SettingService $settingService, string $id): ResponseInterface
+    public function setting_query(SettingService $settingService, string $slug): ResponseInterface
     {
         //交给service处理
-        return $settingService->index('site_' . $id);
+        return $settingService->setting_query($slug);
+    }
+
+    /**
+     * @param SettingService $settingService
+     * @param string $id
+     * @return ResponseInterface
+     * @RequestMapping(path="{slug}/setting_query_key", methods="get")
+     */
+    public function setting_query_key(SettingService $settingService, string $slug): ResponseInterface
+    {
+        //交给service处理
+        return $settingService->setting_query_key($slug, $this->request->input('key', ''));
     }
 
     /**
@@ -39,15 +51,15 @@ class SettingController extends AbstractController
      * @param SettingRequest $request
      * @param string $id
      * @return ResponseInterface
-     * @RequestMapping(path="/admin/site_{id}/update", methods="put")
+     * @RequestMapping(path="{slug}/setting_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(SettingService $settingService, SettingRequest $request, string $id): ResponseInterface
+    public function setting_update(SettingService $settingService, SettingRequest $request, string $slug): ResponseInterface
     {
         //交给service处理
-        return $settingService->update($request, 'site_' . $id);
+        return $settingService->setting_update($request, $slug);
     }
 }

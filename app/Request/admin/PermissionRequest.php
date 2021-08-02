@@ -6,7 +6,7 @@ namespace App\Request\admin;
 
 use Hyperf\Validation\Request\FormRequest;
 
-class MenuPermissionRequest extends FormRequest
+class PermissionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,14 +22,14 @@ class MenuPermissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'regex:/^[\w-]*$/|max:15|min:2',
-            'title' => 'required|string|max:30|min:2',
-            'icon' => 'required|string|max:15|min:2',
-            'path' => 'string|max:30|min:2',
-            'url' => 'string|max:30|min:2',
+            'name' => 'regex:/^[\w-]*$/|max:50|min:2',
+            'title' => 'required|string|max:50|min:2',
+            'icon' => 'required|string|max:50|min:2',
+            'path' => 'string|nullable|max:50|min:2',
+            'url' => 'string|nullable|max:50|min:2',
             'status' => 'required|boolean',
-            'method' => 'string|max:30|min:2',
-            'key' => 'string',
+            'method' => 'string|nullable|max:50|min:2',
+            'key' => 'string|nullable',
             'p_id' => 'required|integer',
             'is_menu' => 'required|boolean',
             'sort' => 'required|integer',

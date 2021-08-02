@@ -37,7 +37,7 @@ class QueryListService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function index($request): ResponseInterface
+    public function query_list_query($request): ResponseInterface
     {
         $data = $request->all();
         //需要采集的目标页面

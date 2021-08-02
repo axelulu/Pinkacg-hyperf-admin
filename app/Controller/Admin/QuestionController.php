@@ -12,7 +12,7 @@ use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
 use Phper666\JWTAuth\JWT;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 
@@ -26,32 +26,32 @@ class QuestionController extends AbstractController
     /**
      * @param QuestionService $quesionService
      * @return ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @RequestMapping(path="question_query", methods="get")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function index(QuestionService $quesionService, JWT $JWT): ResponseInterface
+    public function question_query(QuestionService $quesionService, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $quesionService->index($this->request, $JWT);
+        return $quesionService->question_query($this->request, $JWT);
     }
 
     /**
      * @param QuestionService $quesionService
      * @param QuestionRequest $request
      * @return ResponseInterface
-     * @RequestMapping(path="create", methods="post")
+     * @RequestMapping(path="question_create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(QuestionService $quesionService, QuestionRequest $request): ResponseInterface
+    public function question_create(QuestionService $quesionService, QuestionRequest $request): ResponseInterface
     {
         //交给service处理
-        return $quesionService->create($request);
+        return $quesionService->question_create($request);
     }
 
     /**
@@ -59,32 +59,32 @@ class QuestionController extends AbstractController
      * @param QuestionRequest $request
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="update/{id}", methods="put")
+     * @RequestMapping(path="question_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(QuestionService $quesionService, QuestionRequest $request, int $id): ResponseInterface
+    public function question_update(QuestionService $quesionService, QuestionRequest $request): ResponseInterface
     {
         //交给service处理
-        return $quesionService->update($request, $id);
+        return $quesionService->question_update($request, $this->request->input('id', -1));
     }
 
     /**
      * @param QuestionService $quesionService
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="delete/{id}", methods="delete")
+     * @RequestMapping(path="question_delete", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(QuestionService $quesionService, int $id): ResponseInterface
+    public function question_delete(QuestionService $quesionService): ResponseInterface
     {
         //交给service处理
-        return $quesionService->delete($id);
+        return $quesionService->question_delete($this->request->input('id', -1));
     }
 
     /**
@@ -92,15 +92,15 @@ class QuestionController extends AbstractController
      * @param JWT $JWT
      * @param QuestionRequest $request
      * @return ResponseInterface|void
-     * @RequestMapping(path="/admin/submitQuestionResult/index", methods="post")
+     * @RequestMapping(path="question_submit", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function submitQuestionResult(QuestionService $quesionService, JWT $JWT): ResponseInterface
+    public function question_submit(QuestionService $quesionService, JWT $JWT): ResponseInterface
     {
         //交给service处理
-        return $quesionService->submitQuestionResult($this->request, $JWT);
+        return $quesionService->question_submit($this->request, $JWT);
     }
 }

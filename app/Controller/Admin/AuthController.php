@@ -10,8 +10,7 @@ use Phper666\JWTAuth\JWT;
 use Psr\Http\Message\ResponseInterface;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\AutoController;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
-use Psr\SimpleCache\InvalidArgumentException;
+use App\Middleware\JWTAuthMiddleware;
 
 /**
  * Class AuthController

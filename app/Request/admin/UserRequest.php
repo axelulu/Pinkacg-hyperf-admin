@@ -31,6 +31,7 @@ class UserRequest extends FormRequest
             'password' => 'required',
             'telephone' => 'required|integer',
             'answertest' => 'required|integer',
+            'credit' => 'integer',
             'username' => 'required|string|min:2|max:100',
             'user_role' => 'required|integer'
         ];

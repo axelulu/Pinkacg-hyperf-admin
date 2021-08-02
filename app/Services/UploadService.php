@@ -14,7 +14,7 @@ class UploadService extends Service
      * @param $filesystem
      * @return ResponseInterface
      */
-    public function uploadImgFile($request, $filesystem): ResponseInterface
+    public function upload_img($request, $filesystem): ResponseInterface
     {
         $file = $request->validated();
         $postImg = $file['file'];
@@ -62,7 +62,7 @@ class UploadService extends Service
      * @param $filesystem
      * @return ResponseInterface
      */
-    public function uploadSiteMeta($request, $filesystem): ResponseInterface
+    public function upload_setting($request, $filesystem): ResponseInterface
     {
         $file = $request->validated();
         $postImg = $file['file'];
@@ -86,7 +86,7 @@ class UploadService extends Service
         //获取扩展名
         $extension = $postImg->getExtension();
         $filename = md5(time() . $postImg->getClientFilename());
-        $path = \Qiniu\json_decode((Setting::query()->where([['name', 'site_meta']])->get())[0]['value'])->system_attachment;
+        $path = \Qiniu\json_decode(Setting::query()->where([['name', 'site_meta']])->first()['value'])->system_attachment;
         //构建图片链接
         $postImglink = $path . '/' . $userId .  '/' . $postId . '/' . $filename . '.' . $extension;
         $filelink = 'uploads/' . $postImglink;

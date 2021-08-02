@@ -7,13 +7,13 @@ namespace App\Controller\Admin;
 use App\Controller\AbstractController;
 use App\Request\admin\AttachmentCatRequest;
 use App\Services\AttachmentCatService;
-use Hyperf\HttpServer\Contract\ResponseInterface;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class AttachmentCatController
@@ -24,61 +24,61 @@ class AttachmentCatController extends AbstractController
 {
     /**
      * @param AttachmentCatService $attachmentCatService
-     * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @return ResponseInterface
+     * @RequestMapping(path="attachment_cat_query", methods="get")
      */
-    public function index(AttachmentCatService $attachmentCatService): \Psr\Http\Message\ResponseInterface
+    public function attachment_cat_query(AttachmentCatService $attachmentCatService): ResponseInterface
     {
         //交给service处理
-        return $attachmentCatService->index($this->request);
+        return $attachmentCatService->attachment_cat_query($this->request);
     }
 
     /**
      * @param AttachmentCatService $attachmentCatService
      * @param AttachmentCatRequest $request
-     * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="create", methods="post")
+     * @return ResponseInterface
+     * @RequestMapping(path="attachment_cat_create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(AttachmentCatService $attachmentCatService, AttachmentCatRequest $request): \Psr\Http\Message\ResponseInterface
+    public function attachment_cat_create(AttachmentCatService $attachmentCatService, AttachmentCatRequest $request): ResponseInterface
     {
         //交给service处理
-        return $attachmentCatService->create($request);
+        return $attachmentCatService->attachment_cat_create($request);
     }
 
     /**
      * @param AttachmentCatService $attachmentCatService
      * @param AttachmentCatRequest $request
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="update/{id}", methods="put")
+     * @return ResponseInterface
+     * @RequestMapping(path="attachment_cat_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(AttachmentCatService $attachmentCatService, AttachmentCatRequest $request, int $id): \Psr\Http\Message\ResponseInterface
+    public function attachment_cat_update(AttachmentCatService $attachmentCatService, AttachmentCatRequest $request): ResponseInterface
     {
         //交给service处理
-        return $attachmentCatService->update($request, $id);
+        return $attachmentCatService->attachment_cat_update($request, $this->request->input('id', -1));
     }
 
     /**
      * @param AttachmentCatService $attachmentCatService
      * @param int $id
-     * @return \Psr\Http\Message\ResponseInterface
-     * @RequestMapping(path="delete/{id}", methods="delete")
+     * @return ResponseInterface
+     * @RequestMapping(path="attachment_cat_delete", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(AttachmentCatService $attachmentCatService, int $id): \Psr\Http\Message\ResponseInterface
+    public function attachment_cat_delete(AttachmentCatService $attachmentCatService): ResponseInterface
     {
         //交给service处理
-        return $attachmentCatService->delete($id);
+        return $attachmentCatService->attachment_cat_delete($this->request->input('id', -1));
     }
 }

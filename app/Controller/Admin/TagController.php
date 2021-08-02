@@ -11,7 +11,7 @@ use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 
@@ -25,28 +25,28 @@ class TagController extends AbstractController
     /**
      * @param TagService $tagService
      * @return ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @RequestMapping(path="tag_query", methods="get")
      */
-    public function index(TagService $tagService): ResponseInterface
+    public function tag_query(TagService $tagService): ResponseInterface
     {
         //交给service处理
-        return $tagService->index($this->request);
+        return $tagService->tag_query($this->request);
     }
 
     /**
      * @param TagService $tagService
      * @param TagRequest $request
      * @return ResponseInterface
-     * @RequestMapping(path="create", methods="post")
+     * @RequestMapping(path="tag_create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(TagService $tagService, TagRequest $request): ResponseInterface
+    public function tag_create(TagService $tagService, TagRequest $request): ResponseInterface
     {
         //交给service处理
-        return $tagService->create($request);
+        return $tagService->tag_create($request);
     }
 
     /**
@@ -54,31 +54,31 @@ class TagController extends AbstractController
      * @param TagRequest $request
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="update/{id}", methods="put")
+     * @RequestMapping(path="tag_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(TagService $tagService, TagRequest $request, int $id): ResponseInterface
+    public function tag_update(TagService $tagService, TagRequest $request): ResponseInterface
     {
         //交给service处理
-        return $tagService->update($request, $id);
+        return $tagService->tag_update($request, $this->request->input('id', -1));
     }
 
     /**
      * @param TagService $tagService
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="delete/{id}", methods="delete")
+     * @RequestMapping(path="tag_delete", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(TagService $tagService, int $id): ResponseInterface
+    public function tag_delete(TagService $tagService): ResponseInterface
     {
         //交给service处理
-        return $tagService->delete($id);
+        return $tagService->tag_delete($this->request->input('id', -1));
     }
 }

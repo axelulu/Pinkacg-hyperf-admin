@@ -24,7 +24,7 @@ class CategoryService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function index($request): ResponseInterface
+    public function category_query($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
@@ -45,7 +45,7 @@ class CategoryService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function create($request): ResponseInterface
+    public function category_create($request): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -69,7 +69,7 @@ class CategoryService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function update($request, $id): ResponseInterface
+    public function category_update($request, $id): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -92,7 +92,7 @@ class CategoryService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function delete($id): ResponseInterface
+    public function category_delete($id): ResponseInterface
     {
         //获取数据
         try {

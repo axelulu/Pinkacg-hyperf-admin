@@ -27,7 +27,7 @@ class QuestionService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function index($request, $JWT): ResponseInterface
+    public function question_query($request, $JWT): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $answer = $request->input('answer', 0);
@@ -43,7 +43,7 @@ class QuestionService extends Service
 
             //当前用户得数
             $userId = $JWT->getParserData()['id'];
-            $grade = (User::query()->select('answertest')->where('id', $userId)->get())[0]['answertest'];
+            $grade = (User::query()->select('answertest')->where('id', $userId)->first())['answertest'];
 
             // 验证
             $data = AdminQuestionResource::collection($question)->toArray();
@@ -94,7 +94,7 @@ class QuestionService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function create($request): ResponseInterface
+    public function question_create($request): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -118,7 +118,7 @@ class QuestionService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function update($request, $id): ResponseInterface
+    public function question_update($request, $id): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -141,7 +141,7 @@ class QuestionService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function delete($id): ResponseInterface
+    public function question_delete($id): ResponseInterface
     {
         //删除内容
         try {
@@ -162,7 +162,7 @@ class QuestionService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function submitQuestionResult($request, $JWT): ResponseInterface
+    public function question_submit($request, $JWT): ResponseInterface
     {
         $userId = $JWT->getParserData()['id'];
         $data = $request->all();
@@ -172,7 +172,7 @@ class QuestionService extends Service
         //处理数据
         try {
             foreach ($data as $k => $v) {
-                $answer = (Question::query()->select('answer')->where('id', $v['id'] + 1)->get()->toArray())[0]['answer'];
+                $answer = Question::query()->select('answer')->where('id', $v['id'] + 1)->first()->toArray()['answer'];
                 if ($answer === $v['result']) {
                     $gradeItem++;
                 }
@@ -185,8 +185,8 @@ class QuestionService extends Service
             ]);
             if ($grade >= 60) {
                 //获取角色id
-                $user_role = Setting::query()->select('value')->where('name', 'site_meta')->get()->toArray();
-                $user_role = \Qiniu\json_decode($user_role[0]['value'])->question_role;
+                $user_role = Setting::query()->select('value')->where('name', 'site_meta')->first()->toArray();
+                $user_role = \Qiniu\json_decode($user_role['value'])->question_role;
                 //赋予角色
                 if (!self::setUserRole($userId, $user_role)) {
                     return $this->fail([], '赋予角色失败');

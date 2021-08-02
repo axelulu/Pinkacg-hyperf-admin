@@ -5,7 +5,7 @@ namespace App\Resource\admin;
 use App\Model\AdminPermission;
 use Hyperf\Resource\Json\JsonResource;
 
-class MenuPermissionResource extends JsonResource
+class PermissionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -28,7 +28,7 @@ class MenuPermissionResource extends JsonResource
                 'p_id' => (int) $this->p_id,
                 'is_menu' => (int) $this->is_menu ? true : false,
                 'sort' => (int) $this->sort,
-                'children' => MenuPermissionResource::collection(AdminPermission::query()->where('p_id', $this->id)->orderBy('sort', 'asc')->get()),
+                'children' => PermissionResource::collection(AdminPermission::query()->where('p_id', $this->id)->orderBy('sort', 'asc')->get()),
                 'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
             ];
         } else {

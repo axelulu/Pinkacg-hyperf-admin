@@ -24,7 +24,7 @@ class CommentService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function index($request): ResponseInterface
+    public function comment_query($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
@@ -45,7 +45,7 @@ class CommentService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function create($request): ResponseInterface
+    public function comment_create($request): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -70,11 +70,11 @@ class CommentService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function update($request, $JWT, $id): ResponseInterface
+    public function comment_update($request, $JWT, $id): ResponseInterface
     {
         //获取作者id
         try {
-            $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+            $postAuthorId = Post::query()->select('author')->where('id', $id)->first()->toArray()['author'];
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
@@ -106,11 +106,11 @@ class CommentService extends Service
      * @param $id
      * @return ResponseInterface
      */
-    public function delete($request, $JWT, $id): ResponseInterface
+    public function comment_delete($request, $JWT, $id): ResponseInterface
     {
         //获取作者id
         try {
-            $postAuthorId = (Post::query()->select('author')->where('id', $id)->get()->toArray())[0]['author'];
+            $postAuthorId = Post::query()->select('author')->where('id', $id)->first()->toArray()['author'];
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }

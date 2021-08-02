@@ -84,10 +84,15 @@ class AuthService extends Service
         if (isset($data['username']) && isset($data['email']) && isset($data['password'])) {
             //创建用户
             try {
+                $site_meta = \Qiniu\json_decode((Setting::query()->where('name', 'site_meta')->first()->toArray())['value']);
+                $default_avatar = $site_meta->default_avatar;
+                $default_background = $site_meta->default_background;
                 $flag = User::query()->create([
                     'name' => $data['username'],
                     'username' => $data['username'],
                     'email' => $data['email'],
+                    'avatar' => $default_avatar,
+                    'background' => $default_background,
                     'check' => 1,
                     'password' => $this->passwordHash($data['password'])
                 ])->toArray();
@@ -97,8 +102,8 @@ class AuthService extends Service
 
             if ($flag) {
                 //获取角色id
-                $user_role = Setting::query()->select('value')->where('name', 'site_meta')->get()->toArray();
-                $user_role = \Qiniu\json_decode($user_role[0]['value'])->register_role;
+                $user_role = Setting::query()->select('value')->where('name', 'site_meta')->first()->toArray();
+                $user_role = \Qiniu\json_decode($user_role['value'])->register_role;
                 //赋予角色
                 if (!self::setUserRole($flag['id'], $user_role)) {
                     return $this->fail([], '赋予角色失败');

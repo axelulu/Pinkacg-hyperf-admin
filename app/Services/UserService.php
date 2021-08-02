@@ -10,6 +10,7 @@ use App\Model\AdminPermission;
 use App\Model\AdminRole;
 use App\Model\Comment;
 use App\Model\Post;
+use App\Model\Setting;
 use App\Model\User;
 use App\Resource\admin\NavResource;
 use App\Resource\admin\UserResource;
@@ -28,7 +29,7 @@ class UserService extends Service
      */
     protected $userFilter;
 
-    public function index($request): ResponseInterface
+    public function user_query($request): ResponseInterface
     {
         $orderBy = $request->input('orderBy', 'id');
         $pageSize = $request->query('pageSize') ?? 12;
@@ -45,7 +46,7 @@ class UserService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function info($JWT): ResponseInterface
+    public function user_info($JWT): ResponseInterface
     {
         $user = $JWT->getParserData();
         $role_meta = $user['role_meta'];
@@ -132,7 +133,7 @@ class UserService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function nav($JWT): ResponseInterface
+    public function user_nav($JWT): ResponseInterface
     {
         $user = $JWT->getParserData();
         $permission = $user['permission'];
@@ -164,7 +165,7 @@ class UserService extends Service
      * @param $request
      * @return ResponseInterface
      */
-    public function create($request): ResponseInterface
+    public function user_create($request): ResponseInterface
     {
         //获取验证数据
         $data = self::getValidatedData($request);
@@ -214,7 +215,7 @@ class UserService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function update($request, $id, $JWT): ResponseInterface
+    public function user_update($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
         if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
@@ -257,7 +258,7 @@ class UserService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function updateUserAvatar($request, $id, $JWT): ResponseInterface
+    public function user_update_avatar($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
         if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
@@ -290,7 +291,7 @@ class UserService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function updateUserInfo($request, $id, $JWT): ResponseInterface
+    public function user_update_info($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
         if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
@@ -318,7 +319,7 @@ class UserService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function updateUserEmail($request, $id, $JWT): ResponseInterface
+    public function user_update_email($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
         if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
@@ -350,7 +351,7 @@ class UserService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function sendUserMail($request, $id, $JWT): ResponseInterface
+    public function user_send_email($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
         if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
@@ -383,7 +384,7 @@ class UserService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function updateUserPassword($request, $id, $JWT): ResponseInterface
+    public function user_update_password($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
         if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {
@@ -419,7 +420,7 @@ class UserService extends Service
      * @param $JWT
      * @return ResponseInterface
      */
-    public function delete($request, $id, $JWT): ResponseInterface
+    public function user_delete($request, $id, $JWT): ResponseInterface
     {
         //判断是否是JWT用户
         if (!self::isJWTUser($request, $JWT->getParserData()['id'], $id)) {

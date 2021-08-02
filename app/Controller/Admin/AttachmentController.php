@@ -14,7 +14,7 @@ use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 
@@ -28,12 +28,12 @@ class AttachmentController extends AbstractController
     /**
      * @param AttachmentService $attachmentService
      * @return ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @RequestMapping(path="attachment_query", methods="get")
      */
-    public function index(AttachmentService $attachmentService): ResponseInterface
+    public function attachment_query(AttachmentService $attachmentService): ResponseInterface
     {
         //交给service处理
-        return $attachmentService->index($this->request);
+        return $attachmentService->attachment_query($this->request);
     }
 
     /**
@@ -41,16 +41,16 @@ class AttachmentController extends AbstractController
      * @param AttachmentRequest $request
      * @param Filesystem $filesystem
      * @return ResponseInterface
-     * @RequestMapping(path="create", methods="post")
+     * @RequestMapping(path="attachment_create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(AttachmentService $attachmentService, AttachmentRequest $request): ResponseInterface
+    public function attachment_create(AttachmentService $attachmentService, AttachmentRequest $request): ResponseInterface
     {
         //交给service处理
-        return $attachmentService->create($request);
+        return $attachmentService->attachment_create($request);
     }
 
     /**
@@ -59,16 +59,16 @@ class AttachmentController extends AbstractController
      * @return ResponseInterface
      * @throws FileExistsException
      * @throws FileNotFoundException
-     * @RequestMapping(path="update/{id}", methods="put")
+     * @RequestMapping(path="attachment_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(AttachmentService $attachmentService, AttachmentRequest $request): ResponseInterface
+    public function attachment_update(AttachmentService $attachmentService, AttachmentRequest $request): ResponseInterface
     {
         //交给service处理
-        return $attachmentService->update($request);
+        return $attachmentService->attachment_update($request, $this->request->input('id', -1));
     }
 
     /**
@@ -77,15 +77,15 @@ class AttachmentController extends AbstractController
      * @param int $id
      * @param Filesystem $filesystem
      * @return ResponseInterface
-     * @RequestMapping(path="delete/{id}", methods="delete")
+     * @RequestMapping(path="attachment_delete", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(AttachmentService $attachmentService, AttachmentRequest $request, int $id, Filesystem $filesystem): ResponseInterface
+    public function attachment_delete(AttachmentService $attachmentService, AttachmentRequest $request, Filesystem $filesystem): ResponseInterface
     {
         //交给service处理
-        return $attachmentService->delete($request, $filesystem, $id);
+        return $attachmentService->attachment_delete($request, $filesystem, $this->request->input('id', -1));
     }
 }

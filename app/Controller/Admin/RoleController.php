@@ -11,7 +11,7 @@ use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Annotation\Middleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
-use Phper666\JWTAuth\Middleware\JWTAuthMiddleware;
+use App\Middleware\JWTAuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Psr\Http\Message\ResponseInterface;
 
@@ -25,28 +25,28 @@ class RoleController extends AbstractController
     /**
      * @param RoleService $roleService
      * @return ResponseInterface
-     * @RequestMapping(path="index", methods="get")
+     * @RequestMapping(path="role_query", methods="get")
      */
-    public function index(RoleService $roleService): ResponseInterface
+    public function role_query(RoleService $roleService): ResponseInterface
     {
         //交给service处理
-        return $roleService->index($this->request);
+        return $roleService->role_query($this->request);
     }
 
     /**
      * @param RoleService $roleService
      * @param RoleRequest $request
      * @return ResponseInterface
-     * @RequestMapping(path="create", methods="post")
+     * @RequestMapping(path="role_create", methods="post")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function create(RoleService $roleService, RoleRequest $request): ResponseInterface
+    public function role_create(RoleService $roleService, RoleRequest $request): ResponseInterface
     {
         //交给service处理
-        return $roleService->create($request);
+        return $roleService->role_create($request);
     }
 
     /**
@@ -54,31 +54,31 @@ class RoleController extends AbstractController
      * @param RoleRequest $request
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="update/{id}", methods="put")
+     * @RequestMapping(path="role_update", methods="put")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function update(RoleService $roleService, RoleRequest $request, int $id): ResponseInterface
+    public function role_update(RoleService $roleService, RoleRequest $request): ResponseInterface
     {
         //交给service处理
-        return $roleService->update($request, $id);
+        return $roleService->role_update($request, $this->request->input('id', -1));
     }
 
     /**
      * @param RoleService $roleService
      * @param int $id
      * @return ResponseInterface
-     * @RequestMapping(path="delete/{id}", methods="delete")
+     * @RequestMapping(path="role_delete", methods="delete")
      * @Middlewares({
      *     @Middleware(JWTAuthMiddleware::class),
      *     @Middleware(PermissionMiddleware::class)
      * })
      */
-    public function delete(RoleService $roleService, int $id): ResponseInterface
+    public function role_delete(RoleService $roleService): ResponseInterface
     {
         //交给service处理
-        return $roleService->delete($id);
+        return $roleService->role_delete($this->request->input('id', -1));
     }
 }
