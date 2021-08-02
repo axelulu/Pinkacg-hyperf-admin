@@ -49,6 +49,7 @@ class UserService extends Service
     public function user_info($JWT): ResponseInterface
     {
         $user = $JWT->getParserData();
+        $user = User::query()->find($user['id'])->toArray();
         $role_meta = $user['role_meta'];
         $permission = $user['permission'];
         $permissions = array();
@@ -105,17 +106,15 @@ class UserService extends Service
             'id' => $user['id'],
             'name' => $user['name'],
             'username' => $user['username'],
-            'password' => '',
             'avatar' => $user['avatar'],
-            'status' => $user['status'],
+            'background' => $user['background'],
+            'credit' => $user['credit'],
+            'answertest' => $user['answertest'],
             'telephone' => $user['telephone'],
+            'comment_num' => Comment::query()->where('user_id', $user['id'])->count(),
+            'post_num' => Post::query()->where('author', $user['id'])->count(),
             'lastLoginIp' => $user['ip'],
             'lastLoginTime' => $user['updated_at'],
-            'creatorId' => $user['id'],
-            'createTime' => $user['created_at'],
-            'merchantCode' => 'TLif2btpzg079h15bk',
-            'deleted' => 0,
-            'roleId' => $user['username'],
             'role' => [
                 'id' => $role_meta->id,
                 'name' => $role_meta->name,

@@ -63,10 +63,9 @@ class QuestionService extends Service
                 $len = count($data);
                 $result = [];
                 $num = self::uniqueRand(0, $len - 1, 10);
-
                 //生成随机题库
                 for ($i = 0; $i < 10; $i++) {
-                    $data[$num[$i]]['id'] = $num[$i];
+                    $result[$i]['id'] = $data[$num[$i]]['id'];
                     $result[$i] = $data[$num[$i]];
                 }
                 $data = $result;
@@ -170,31 +169,27 @@ class QuestionService extends Service
         $gradeItem = 0;
 
         //处理数据
-        try {
-            foreach ($data as $k => $v) {
-                $answer = Question::query()->select('answer')->where('id', $v['id'] + 1)->first()->toArray()['answer'];
-                if ($answer === $v['result']) {
-                    $gradeItem++;
-                }
+        foreach ($data as $k => $v) {
+            $answer = Question::query()->select('answer')->where('id', $v['id'])->first()->toArray()['answer'];
+            if ($answer === $v['result']) {
+                $gradeItem++;
             }
-            $grade = (100 / $len) * $gradeItem;
+        }
+        $grade = (100 / $len) * $gradeItem;
 
-            //更新用户分数
-            User::query()->where('id', $userId)->update([
-                'answertest' => $grade
-            ]);
-            if ($grade >= 60) {
-                //获取角色id
-                $user_role = Setting::query()->select('value')->where('name', 'site_meta')->first()->toArray();
-                $user_role = \Qiniu\json_decode($user_role['value'])->question_role;
-                //赋予角色
-                if (!self::setUserRole($userId, $user_role)) {
-                    return $this->fail([], '赋予角色失败');
-                }
-                return $this->success(['grade' => $grade]);
+        //更新用户分数
+        User::query()->where('id', $userId)->update([
+            'answertest' => $grade
+        ]);
+        if ($grade >= 60) {
+            //获取角色id
+            $user_role = Setting::query()->select('value')->where('name', 'site_meta')->first()->toArray();
+            $user_role = \Qiniu\json_decode($user_role['value'])->question_role;
+            //赋予角色
+            if (!self::setUserRole($userId, $user_role)) {
+                return $this->fail([], '赋予角色失败');
             }
-        } catch (\Throwable $throwable) {
-            throw new RequestException($throwable->getMessage(), $throwable->getCode());
+            return $this->success(['grade' => $grade]);
         }
 
         //返回结果

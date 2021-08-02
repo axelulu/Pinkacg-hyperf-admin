@@ -25,7 +25,10 @@ class CategoryResource extends JsonResource
                 'status' => (bool)((int)$this->status),
                 'updated_at' => str_replace(array('T', 'Z'), ' ', $this->updated_at),
                 'children' => CategoryResource::collection(Category::query()->where('son', $this->id)->get()),
-                'num' => Post::query()->where('menu', '"' . $this->value . '"')->count()
+                'num' => Post::query()->where('menu', 'like', '%[' . $this->id . ',%')
+                    ->orWhere('menu', 'like', '%,' . $this->id . ']%')
+                    ->orWhere('menu', 'like', ',%,' . $this->id . ',%')
+                    ->orWhere('menu', 'like', '%[' . $this->id . ']%')->count()
             ];
         } else {
             return [
@@ -36,7 +39,10 @@ class CategoryResource extends JsonResource
                 'icon' => $this->icon,
                 'status' => (bool)((int)$this->status),
                 'updated_at' => str_replace(array('T', 'Z'), ' ', $this->updated_at),
-                'num' => Post::query()->where('menu', '"' . $this->value . '"')->count()
+                'num' => Post::query()->where('menu', 'like', '%[' . $this->id . ',%')
+                    ->orWhere('menu', 'like', '%,' . $this->id . ']%')
+                    ->orWhere('menu', 'like', ',%,' . $this->id . ',%')
+                    ->orWhere('menu', 'like', '%[' . $this->id . ']%')->count()
             ];
         }
     }

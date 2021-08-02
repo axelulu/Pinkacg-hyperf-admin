@@ -94,6 +94,7 @@ class AuthService extends Service
                     'avatar' => $default_avatar,
                     'background' => $default_background,
                     'check' => 1,
+                    'credit' => 100,
                     'password' => $this->passwordHash($data['password'])
                 ])->toArray();
             } catch (\Throwable $throwable) {
