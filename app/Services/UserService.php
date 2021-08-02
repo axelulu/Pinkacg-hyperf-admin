@@ -49,9 +49,9 @@ class UserService extends Service
     public function user_info($JWT): ResponseInterface
     {
         $user = $JWT->getParserData();
-        $user = User::query()->find($user['id'])->toArray();
         $role_meta = $user['role_meta'];
         $permission = $user['permission'];
+        $user = User::query()->find($user['id'])->toArray();
         $permissions = array();
 
         //获取数据
