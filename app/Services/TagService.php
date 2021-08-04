@@ -34,7 +34,7 @@ class TagService extends Service
                 ->where($this->tagFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(TagResource::collection($tag), $request, $tag));
+            return $this->success(self::getDisplayColumnData(TagResource::collection($tag)->toArray(), $request, $tag));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }

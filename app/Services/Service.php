@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Model\Attachment;
+use App\Model\PermissionRule;
 use App\Model\Setting;
 use Donjan\Casbin\Enforcer;
 use Hyperf\Di\Annotation\Inject;
@@ -74,6 +75,35 @@ abstract class Service
             'result' => $data ?: (object)[],
         ];
         return $this->response->json($res);
+    }
+
+    /**
+     * @param array $arr
+     * @param int $pid
+     * @param int $depth
+     * @param string $p_sub
+     * @param string $c_sub
+     * @param string $d_sub
+     * @return array
+     */
+    function handleTreeList(array $arr, int $pid=0, int $depth=0, string $p_sub='son', string $c_sub='children', string $d_sub='depth'): array
+    {
+        $returnArray = [];
+        if(is_array($arr) && $arr) {
+            foreach($arr as $k => $v) {
+                if($v[$p_sub] == $pid) {
+                    $v[$d_sub] = $depth;
+                    $tempInfo = $v;
+                    unset($arr[$k]); // 减少数组长度，提高递归的效率，否则数组很大时肯定会变慢
+                    $temp = self::handleTreeList($arr,$v['id'],$depth+1,$p_sub,$c_sub,$d_sub);
+                    if ($temp) {
+                        $tempInfo[$c_sub] = $temp;
+                    }
+                    $returnArray[] = $tempInfo;
+                }
+            }
+        }
+        return $returnArray;
     }
 
     /**
@@ -175,7 +205,6 @@ abstract class Service
      */
     public function getDisplayColumnData($data, $request, $attachmentCat)
     {
-        $data = $data->toArray();
         $attachmentCats = $attachmentCat->toArray();
         $exceptColumns = \Qiniu\json_decode($request->getAttribute('except_columns'));
         if (is_array($data)) {
@@ -204,9 +233,9 @@ abstract class Service
      */
     public function setUserRole($id, $role): bool
     {
-        if (!Enforcer::hasRoleForUser('roles_' . $id, $role)) {
-            Enforcer::deleteRolesForUser('roles_' . $id);
-            if (Enforcer::addRoleForUser('roles_' . $id, $role)) {
+        if (!(new PermissionRule)->hasRoleForUser($id, $role)) {
+            (new PermissionRule)->deleteRolesForUser($id);
+            if ((new PermissionRule)->addRoleForUser($id, $role)) {
                 return true;
             }
             return false;

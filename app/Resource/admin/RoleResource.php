@@ -2,6 +2,7 @@
 
 namespace App\Resource\admin;
 
+use App\Model\PermissionRule;
 use Hyperf\Resource\Json\JsonResource;
 use Donjan\Casbin\Enforcer;
 
@@ -24,14 +25,15 @@ class RoleResource extends JsonResource
         ];
     }
 
-    protected function rolePermission($id)
+    protected function rolePermission($id): array
     {
-        $rolePermission = Enforcer::getPermissionsForUser('permission_' . $id);
+        $rolePermission = (new PermissionRule)->getPermissionsForUser($id);
+        var_dump($rolePermission);
         $permission = [];
         $i=0;
         foreach($rolePermission as $v){
-            if($v[3]){
-                $permission[$i++] = (int) $v[3];
+            if($v['value_id']){
+                $permission[$i++] = (int) $v['value_id'];
             }
         }
         return $permission;

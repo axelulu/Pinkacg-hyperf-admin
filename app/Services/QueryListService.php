@@ -143,7 +143,7 @@ class QueryListService extends Service
                                 'post_id' => $postId
                             ], [
                                 'headers' => [
-                                    'authorization' => 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvd3d3LmFpZG0xMi5jb20iLCJpYXQiOjE2Mjc2ODc4OTQsIm5iZiI6MTYyNzY4Nzg5NCwiZXhwIjoxNjI4MjkyNjk0LCJkYXRhIjp7InVzZXIiOnsiaWQiOiIyMjUzMTIifX19.3xIaqY_iDoMIP8sEPFq7vvmLhmGkiJ8FZ0GBk9eI7NU',
+                                    'authorization' => 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvd3d3LmFpZG0xMi5jb20iLCJpYXQiOjE2Mjc5MjMwNTcsIm5iZiI6MTYyNzkyMzA1NywiZXhwIjoxNjI4NTI3ODU3LCJkYXRhIjp7InVzZXIiOnsiaWQiOiIyMjUzMTIifX19.0vsln7K3THKCarLy2Eb59cc5RVHX5zz5bhm9-BYpgFk',
                                     'Referer' => 'https://www.aidm12.com/download/?post_id=87344&index=0&i=2',
                                     'User-Agent' => 'testing/1.0',
                                     'Accept'     => 'application/json'

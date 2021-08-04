@@ -21,7 +21,7 @@ return [
     'app_log' => env('APP_LOG', false),
 
     // 是否记录框架的日志
-    'hf_log' => env('HF_LOG', false),
+    'pk_log' => env('PK_LOG', false),
 
     StdoutLoggerInterface::class => [
         'log_level' => [

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
-use App\Model\AdminPermission;
-use Donjan\Casbin\Enforcer;
+use App\Model\Permission;
+use App\Model\PermissionRule;
 use Hyperf\DbConnection\Db;
-use Hyperf\Utils\Context;
 use Phper666\JWTAuth\JWT;
 use Psr\Container\ContainerInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
@@ -63,15 +62,15 @@ class PermissionMiddleware implements MiddlewareInterface
     {
         $user = $this->JWT->getParserData();
         //判断是否拥有管理员权限
-        $adminPermission = AdminPermission::query()->select('id')->where([
+        $adminPermission = Permission::query()->select('id')->where([
             'name' => 'ALL',
             'path' => 'ALL',
             'url' => 'ALL'
         ])->first()->toArray();
         if (isset($adminPermission['id'])) {
-            $userPermission = Db::table('casbin_rules')->where(['v3' => $adminPermission['id'], 'ptype' => 'p'])->get();
+            $userPermission = PermissionRule::query()->where(['value_id' => $adminPermission['id'], 'type' => 'permission'])->get()->toArray();
             foreach ($userPermission as $k => $v) {
-                if (Db::table('casbin_rules')->where(['v0' => 'roles_' . $user['id'], 'v1' => substr($v->v0, 11, 1)])->get()->count()) {
+                if (PermissionRule::query()->where(['key_id' => $user['id'], 'value_id' => $v['key_id'], 'type' => 'roles'])->get()->count()) {
                     $request = $request->withAttribute('all_permission', 'all_permission');
                     return $handler->handle($request);
                 }
@@ -82,16 +81,16 @@ class PermissionMiddleware implements MiddlewareInterface
 
         //获取请求的路径
         $path = $this->request->path();
-        var_dump($path);
-        $permission = AdminPermission::query()->select('id', 'method', 'key')->where('url', $path)->first()->toArray();
+        $permission = Permission::query()->select('id', 'method', 'key')->where('url', $path)->first()->toArray();
         //获取请求方法
         $method = $this->request->getMethod();
 
         //判断是否拥有普通权限
         if (in_array($method, \Qiniu\json_decode($permission['method']))) {
-            $userPermission = Db::table('casbin_rules')->where(['v3' => $permission['id'], 'ptype' => 'p'])->get();
+            $userPermission = PermissionRule::query()->where(['value_id' => $permission['id'], 'type' => 'permission'])->get()->toArray();
+            var_dump($userPermission);
             foreach ($userPermission as $k => $v) {
-                if (Db::table('casbin_rules')->where(['v0' => 'roles_' . $user['id'], 'v1' => substr($v->v0, 11, 1)])->get()->count()) {
+                if (PermissionRule::query()->where(['key_id' => $user['id'], 'value_id' => $v['key_id'], 'type' => 'roles'])->get()->count()) {
                     //无权访问的字段
                     $request = $request->withAttribute('except_columns', $permission['key']);
                     return $handler->handle($request);

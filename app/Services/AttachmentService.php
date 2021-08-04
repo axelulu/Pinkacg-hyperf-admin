@@ -32,7 +32,7 @@ class AttachmentService extends Service
                 ->where($this->attachmentFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(AttachmentResource::collection($attachment), $request, $attachment));
+            return $this->success(self::getDisplayColumnData(AttachmentResource::collection($attachment)->toArray(), $request, $attachment));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }

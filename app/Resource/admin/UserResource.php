@@ -2,7 +2,7 @@
 
 namespace App\Resource\admin;
 
-use Donjan\Casbin\Enforcer;
+use App\Model\PermissionRule;
 use Hyperf\Resource\Json\JsonResource;
 
 class UserResource extends JsonResource
@@ -36,7 +36,7 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'created_at' => str_replace(array('T','Z'),' ',$this->created_at),
             'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
-            'user_role' => (int) (Enforcer::getRolesForUser('roles_' . $this->id)[0] ?? '')
+            'user_role' => (int)(new PermissionRule)->getRolesForUser($this->id)
         ];
     }
 }

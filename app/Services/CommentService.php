@@ -35,7 +35,7 @@ class CommentService extends Service
                 ->where($this->commentFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(CommentResource::collection($comment), $request, $comment));
+            return $this->success(self::getDisplayColumnData(CommentResource::collection($comment)->toArray(), $request, $comment));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }

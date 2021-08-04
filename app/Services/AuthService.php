@@ -4,14 +4,12 @@
 namespace App\Services;
 
 use App\Exception\RequestException;
-use App\Model\AdminRole;
+use App\Model\PermissionRule;
+use App\Model\Role;
 use App\Model\Comment;
 use App\Model\Post;
 use App\Model\Setting;
 use App\Model\User;
-use Donjan\Casbin\Enforcer;
-use Hyperf\Redis\Redis;
-use Hyperf\Utils\ApplicationContext;
 use Psr\Http\Message\ResponseInterface;
 
 class AuthService extends Service
@@ -27,11 +25,11 @@ class AuthService extends Service
         $user = User::query()->where('username', $username)->first();
         if ($username && $password && $this->passwordHash($password) === $user->password) {
             //获取用户权限
-            $role_id = Enforcer::getRolesForUser('roles_' . $user->id)[0];
-            $permission = Enforcer::getPermissionsForUser('permission_' . $role_id);
+            $role_id = (new PermissionRule)->getRolesForUser($user->id);
+            $permission = (new PermissionRule)->getPermissionsForUser($role_id);
 
             //获取角色信息
-            $role_meta = AdminRole::query()->where('id', $role_id)->first()->toArray();
+            $role_meta = Role::query()->where('id', $role_id)->first()->toArray();
             $userData = [
                 'id' => $user->id,
                 'username' => $username,
@@ -52,9 +50,7 @@ class AuthService extends Service
                 'permission' => $permission,
                 'role_meta' => $role_meta
             ];
-
             $token = $JWT->getToken($userData);
-
             //更新用户登录时间
             try {
                 User::query()->where('username', $username)->update([

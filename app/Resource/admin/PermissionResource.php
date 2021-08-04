@@ -2,7 +2,7 @@
 
 namespace App\Resource\admin;
 
-use App\Model\AdminPermission;
+use App\Model\Permission;
 use Hyperf\Resource\Json\JsonResource;
 
 class PermissionResource extends JsonResource
@@ -14,7 +14,7 @@ class PermissionResource extends JsonResource
      */
     public function toArray(): array
     {
-        if (count(AdminPermission::query()->where('p_id', $this->id)->get()) > 0){
+        if (count(Permission::query()->where('p_id', $this->id)->get()) > 0){
             return [
                 'id' => $this->id,
                 'name' => $this->name,
@@ -28,7 +28,7 @@ class PermissionResource extends JsonResource
                 'p_id' => (int) $this->p_id,
                 'is_menu' => (int) $this->is_menu ? true : false,
                 'sort' => (int) $this->sort,
-                'children' => PermissionResource::collection(AdminPermission::query()->where('p_id', $this->id)->orderBy('sort', 'asc')->get()),
+                'children' => PermissionResource::collection(Permission::query()->where('p_id', $this->id)->orderBy('sort', 'asc')->get()),
                 'updated_at' => str_replace(array('T','Z'),' ',$this->updated_at),
             ];
         } else {

@@ -23,7 +23,7 @@ return [
             // 自定义的验证异常处理器
             FromValidateExceptionHandler::class,
             // 自定义请求错误异常类
-            RequestExceptionHandler::class,
+//            RequestExceptionHandler::class,
         ],
     ],
 ];

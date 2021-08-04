@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Exception\RequestException;
 use App\Filters\MenuFilter;
-use App\Model\AdminPermission;
+use App\Model\Permission;
 use App\Resource\admin\PermissionResource;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Http\Message\ResponseInterface;
@@ -30,11 +30,11 @@ class PermissionService extends Service
 
         //获取数据
         try {
-            $menu = AdminPermission::query()
+            $menu = Permission::query()
                 ->where($this->menuFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(PermissionResource::collection($menu), $request, $menu));
+            return $this->success(self::getDisplayColumnData(PermissionResource::collection($menu)->toArray(), $request, $menu));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
@@ -51,7 +51,7 @@ class PermissionService extends Service
 
         //创建内容
         try {
-            $flag = AdminPermission::query()->create($data);
+            $flag = Permission::query()->create($data);
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
@@ -75,7 +75,7 @@ class PermissionService extends Service
 
         //更新内容
         try {
-            $flag = AdminPermission::query()->where('id', $id)->update($data);
+            $flag = Permission::query()->where('id', $id)->update($data);
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
@@ -96,11 +96,11 @@ class PermissionService extends Service
         try {
             //存在子菜单
             var_dump($id);
-            if (AdminPermission::query()->where('p_id', $id)->count() > 0) {
+            if (Permission::query()->where('p_id', $id)->count() > 0) {
                 return $this->fail([], '存在子菜单');
             }
             //有用户选择此菜单
-            if (AdminPermission::query()->where('id', $id)->delete()) {
+            if (Permission::query()->where('id', $id)->delete()) {
                 return $this->success();
             }
         } catch (\Throwable $throwable) {

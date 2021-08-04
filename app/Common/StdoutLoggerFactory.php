@@ -9,6 +9,6 @@ class StdoutLoggerFactory
 {
     public function __invoke(ContainerInterface $container)
     {
-        return Log::get('sys');
+        return Log::get('pinkacg');
     }
 }

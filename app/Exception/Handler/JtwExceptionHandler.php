@@ -10,7 +10,7 @@ use Throwable;
 
 class JtwExceptionHandler extends ExceptionHandler
 {
-    public function handle(Throwable $throwable, ResponseInterface $response)
+    public function handle(Throwable $throwable, ResponseInterface $response): ResponseInterface
     {
         // 判断被捕获到的异常是希望被捕获的异常
         if ($throwable instanceof TokenValidException) {

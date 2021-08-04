@@ -23,7 +23,7 @@ class SettingService extends Service
             ])->get();
 
             $data = [
-                'data' => SettingResource::collection($permission),
+                'data' => SettingResource::collection($permission)->toArray(),
             ];
             return $this->success($data);
         } catch (\Throwable $throwable) {

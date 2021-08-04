@@ -6,8 +6,9 @@ namespace App\Services;
 
 use App\Exception\RequestException;
 use App\Filters\UserFilter;
-use App\Model\AdminPermission;
-use App\Model\AdminRole;
+use App\Model\Permission;
+use App\Model\PermissionRule;
+use App\Model\Role;
 use App\Model\Comment;
 use App\Model\Post;
 use App\Model\Setting;
@@ -38,7 +39,7 @@ class UserService extends Service
             ->where($this->userFilter->apply())
             ->orderBy($orderBy, 'asc')
             ->paginate((int)$pageSize, ['*'], 'pageNo');
-        return $this->success(self::getDisplayColumnData(UserResource::collection($user), $request, $user));
+        return $this->success(self::getDisplayColumnData(UserResource::collection($user)->toArray(), $request, $user));
 
     }
 
@@ -51,7 +52,9 @@ class UserService extends Service
         $user = $JWT->getParserData();
         $role_meta = $user['role_meta'];
         $permission = $user['permission'];
+        var_dump($permission);
         $user = User::query()->find($user['id'])->toArray();
+        var_dump($user);
         $permissions = array();
 
         //获取数据
@@ -59,7 +62,8 @@ class UserService extends Service
             if (is_array($permission)) {
                 foreach ($permission as $k => $v) {
                     //每一项权限
-                    $permission_item = AdminPermission::query()->where('id', $v[3])->first();
+                    $permission_item = Permission::query()->where('id', $v->value_id)->first()->toArray();
+                    var_dump($permission_item);
                     $method = $permission_item['method'];
                     $methods = [
                         [
@@ -143,11 +147,11 @@ class UserService extends Service
             if (is_array($permission)) {
                 foreach ($permission as $k => $v) {
                     //每一项权限
-                    $permission_item = NavResource::make(AdminPermission::query()->where(['id' => $v[3], 'is_menu' => 1])->orderBy('sort', 'asc')->first());
+                    $permission_item = NavResource::make(Permission::query()->where(['id' => $v->value_id, 'is_menu' => 1])->orderBy('sort', 'asc')->first());
                     $permissions[$k] = $permission_item;
                 }
             }
-            $data = NavResource::collection(AdminPermission::query()->where(['p_id' => 0, 'is_menu' => 1])->orderBy('sort', 'asc')->get())->toArray();
+            $data = NavResource::collection(Permission::query()->where(['p_id' => 0, 'is_menu' => 1])->orderBy('sort', 'asc')->get())->toArray();
 
             if (is_array($data)) {
                 foreach ($data as $k => $v) {
@@ -196,7 +200,7 @@ class UserService extends Service
             //更新用户
             $flag = User::query()->where('id', $flag['id'])->update($data);
             //赋予权限
-            Enforcer::addRoleForUser('roles_' . $flag['id'], $user_role);
+            (new PermissionRule)->addRoleForUser($flag['id'], $user_role);
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }

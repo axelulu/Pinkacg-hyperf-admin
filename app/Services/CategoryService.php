@@ -35,7 +35,7 @@ class CategoryService extends Service
                 ->where($this->categoryFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(CategoryResource::collection($category), $request, $category));
+            return $this->success(self::getDisplayColumnData(CategoryResource::collection($category)->toArray(), $request, $category));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
@@ -73,7 +73,6 @@ class CategoryService extends Service
     {
         //获取验证数据
         $data = self::getValidatedData($request);
-
         //更新内容
         try {
             $flag = Category::query()->where('id', $id)->update($data);
@@ -124,5 +123,24 @@ class CategoryService extends Service
             return $this->success();
         }
         return $this->fail();
+    }
+
+    /**
+     * @param $slug
+     * @return ResponseInterface
+     */
+    public function category_num_query(): ResponseInterface
+    {
+        $cat = Category::query()->where('son', 0)->get()->toArray();
+        var_dump($cat);
+        foreach ($cat as $k => $v) {
+            $num[$k] = Post::query()->where('menu', 'like', '%[' . $v['id'] . ',%')
+                ->orWhere('menu', 'like', '%,' . $v['id'] . ']%')
+                ->orWhere('menu', 'like', ',%,' . $v['id'] . ',%')
+                ->orWhere('menu', 'like', '%[' . $v['id'] . ']%')->count();
+        }
+        return $this->success([
+            'num' => $num
+        ]);
     }
 }

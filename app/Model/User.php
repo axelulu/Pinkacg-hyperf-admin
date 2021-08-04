@@ -44,9 +44,9 @@ class User extends Model
      */
     public static function isAdmin($userId): bool
     {
-        $permissionId = (AdminPermission::query()->select('id')->where([['path', 'ALL'], ['url', 'ALL']])->first()->toArray())['id'];
-        $roleId = (Db::table('casbin_rules')->select('v1')->where([['ptype', 'g'], ['v0', 'roles_' . $userId]])->first())->v1;
-        if (Db::table('casbin_rules')->where([['ptype', 'p'], ['v3', $permissionId], ['v0', 'permission_' . $roleId]])->count() > 0) {
+        $permissionId = (Permission::query()->select('id')->where([['path', 'ALL'], ['url', 'ALL']])->first()->toArray())['id'];
+        $roleId = (PermissionRule::query()->select('value_id')->where([['type', 'roles'], ['key_id', $userId]])->first())->value_id;
+        if (PermissionRule::query()->where([['type', 'permission'], ['value_id', $permissionId], ['key_id', $roleId]])->count() > 0) {
             return true;
         } else {
             return false;

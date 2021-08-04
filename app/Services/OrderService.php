@@ -36,7 +36,7 @@ class OrderService extends Service
                 ->where($this->orderFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(OrderResource::collection($order), $request, $order));
+            return $this->success(self::getDisplayColumnData(OrderResource::collection($order)->toArray(), $request, $order));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }

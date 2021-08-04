@@ -39,17 +39,17 @@ return [
                     ],
                 ],
             ],
-            [
-                'class' => LogDbHandler::class,
-                'formatter' => [
-                    'class' => Monolog\Formatter\LineFormatter::class,
-                    'constructor' => [
-                        'format' => "%datetime%||%channel%||%level_name%||%message%||%context%||%extra%\n",
-                        'dateFormat' => null,
-                        'allowInlineLineBreaks' => true,
-                    ],
-                ]
-            ],
+//            [
+//                'class' => LogDbHandler::class,
+//                'formatter' => [
+//                    'class' => Monolog\Formatter\LineFormatter::class,
+//                    'constructor' => [
+//                        'format' => "%datetime%||%channel%||%level_name%||%message%||%context%||%extra%\n",
+//                        'dateFormat' => null,
+//                        'allowInlineLineBreaks' => true,
+//                    ],
+//                ]
+//            ],
         ],
     ],
 ];

@@ -34,7 +34,7 @@ class AttachmentCatService extends Service
                 ->where($this->attachmentCatFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(AttachmentCatResource::collection($attachmentCat), $request, $attachmentCat));
+            return $this->success(self::getDisplayColumnData(AttachmentCatResource::collection($attachmentCat)->toArray(), $request, $attachmentCat));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }

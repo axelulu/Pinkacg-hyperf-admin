@@ -77,6 +77,10 @@ class PostResource extends JsonResource
                 $newDownload[$k] = [
                     'name' => $v->name,
                     'credit' => $v->credit,
+                    'code' => 401,
+                ];
+                $download[$k] = [
+                    'code' => 200,
                 ];
             }
         }
@@ -101,6 +105,7 @@ class PostResource extends JsonResource
                     if (is_array($orders)) {
                         foreach ($orders as $kk => $vv) {
                             $newDownload[$vv['download_key']] = $download[$vv['download_key']];
+                            $newDownload[$vv['download_key']]['type'] = 200;
                         }
                     }
                 }

@@ -17,25 +17,22 @@ class LogDbHandler extends AbstractProcessingHandler
             return;
         }
         // db驱动是，允许打印框架日志，则直接输出
-        if (config('hf_log') && $record['channel'] == 'hyperf') {
+        if (config('pk_log') && $record['channel'] == 'pinkacg') {
             $output = new ConsoleOutput();
             $output->writeln($record['formatted']);
         }
+        // db驱动，不记录框架日志，框架启动时死循环，原因不明
+        if ($record['channel'] === 'pinkacg') {
+            return;
+        }
         // 判断系统允许日志类型
-        if ($record['level_name'] !== 'INFO' || $record['channel'] !== 'sql') {
+        if ($record['level_name'] !== 'INFO') {
             return;
         }
         $saveData = $record['context'];
         $saveData['channel'] = $record['channel'];
         $saveData['message'] = is_array($record['message']) ? json_encode($record['message']) : $record['message'];
         $saveData['level_name'] = $record['level_name'];
-        // db驱动，不记录框架日志，框架启动时死循环，原因不明
-        if ($saveData['channel'] == 'hyperf') {
-            return;
-        }
-        if (isset($saveData['message']['channel']) && $saveData['message']['channel'] !== 'sql') {
-            return;
-        }
         // 开启新的协程处理保存，避免数据混淆问题
         go(function () use ($saveData) {
             Log::query()->create($saveData);

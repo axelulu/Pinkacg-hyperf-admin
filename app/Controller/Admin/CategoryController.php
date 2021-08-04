@@ -81,4 +81,15 @@ class CategoryController extends AbstractController
         //交给service处理
         return $categoryService->category_delete($this->request->input('id', -1));
     }
+
+    /**
+     * @param CategoryService $categoryService
+     * @return ResponseInterface
+     * @RequestMapping(path="category_num_query", methods="get")
+     */
+    public function category_num_query(CategoryService $categoryService): ResponseInterface
+    {
+        //交给service处理
+        return $categoryService->category_num_query();
+    }
 }

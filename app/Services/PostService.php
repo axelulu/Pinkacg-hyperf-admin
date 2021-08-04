@@ -61,7 +61,7 @@ class PostService extends Service
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
         }
 
-        return $this->success(self::getDisplayColumnData(PostResource::collection($post), $request, $post));
+        return $this->success(self::getDisplayColumnData(PostResource::collection($post)->toArray(), $request, $post));
     }
 
     /**

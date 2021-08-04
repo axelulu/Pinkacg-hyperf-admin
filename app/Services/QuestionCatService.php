@@ -34,7 +34,7 @@ class QuestionCatService extends Service
                 ->where($this->questionCatFilter->apply())
                 ->orderBy($orderBy, 'asc')
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(QuestionCatResource::collection($questionCat), $request, $questionCat));
+            return $this->success(self::getDisplayColumnData(QuestionCatResource::collection($questionCat)->toArray(), $request, $questionCat));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }

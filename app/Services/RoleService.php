@@ -5,7 +5,8 @@ namespace App\Services;
 
 use App\Exception\RequestException;
 use App\Filters\RoleFilter;
-use App\Model\AdminRole;
+use App\Model\PermissionRule;
+use App\Model\Role;
 use App\Resource\admin\RoleResource;
 use Donjan\Casbin\Enforcer;
 use Hyperf\Di\Annotation\Inject;
@@ -29,10 +30,10 @@ class RoleService extends Service
 
         //获取内容
         try {
-            $role = AdminRole::query()
+            $role = Role::query()
                 ->where($this->roleFilter->apply())
                 ->paginate((int)$pageSize, ['*'], 'pageNo');
-            return $this->success(self::getDisplayColumnData(RoleResource::collection($role), $request, $role));
+            return $this->success(self::getDisplayColumnData(RoleResource::collection($role)->toArray(), $request, $role));
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
@@ -49,16 +50,16 @@ class RoleService extends Service
 
         //创建角色
         try {
-            $flag = AdminRole::query()->create($data);
+            $flag = Role::query()->create($data);
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
 
         //赋予权限
         if (isset($data['rolePermission'])) {
-            Enforcer::deletePermissionsForUser('permission_' . $flag['id']);
+            (new PermissionRule)->deletePermissionsForUser($flag['id']);
             foreach ($data['rolePermission'] as $k => $v) {
-                Enforcer::addPermissionForUser('permission_' . $flag['id'], '*', '*', $v);
+                (new PermissionRule)->addPermissionForUser($flag['id'], $v);
             }
         }
 
@@ -81,16 +82,16 @@ class RoleService extends Service
 
         //赋予权限
         if (isset($data['rolePermission'])) {
-            Enforcer::deletePermissionsForUser('permission_' . $id);
+            (new PermissionRule)->deletePermissionsForUser($id);
             foreach ($data['rolePermission'] as $k => $v) {
-                Enforcer::addPermissionForUser('permission_' . $id, '*', '*', $v);
+                (new PermissionRule)->addPermissionForUser($id, $v);
             }
             unset($data['rolePermission']);
         }
 
         //更新内容
         try {
-            $flag = AdminRole::query()->where('id', $id)->update($data);
+            $flag = Role::query()->where('id', $id)->update($data);
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
@@ -109,13 +110,13 @@ class RoleService extends Service
     public function role_delete($id): ResponseInterface
     {
         // 判断是否存在用户角色
-        if (Enforcer::getUsersForRole((string)$id)) {
+        if (count((new PermissionRule)->getUsersForRole((string)$id)) > 0) {
             return $this->fail([], '角色存在用户！');
         }
 
         //删除内容
         try {
-            $flag = AdminRole::query()->where('id', $id)->delete();
+            $flag = Role::query()->where('id', $id)->delete();
         } catch (\Throwable $throwable) {
             throw new RequestException($throwable->getMessage(), $throwable->getCode());
         }
