@@ -79,9 +79,7 @@ class PostResource extends JsonResource
                     'credit' => $v->credit,
                     'code' => 401,
                 ];
-                $download[$k] = [
-                    'code' => 200,
-                ];
+                $download[$k]->code = 200;
             }
         }
         try {
