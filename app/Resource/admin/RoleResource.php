@@ -28,7 +28,6 @@ class RoleResource extends JsonResource
     protected function rolePermission($id): array
     {
         $rolePermission = (new PermissionRule)->getPermissionsForUser($id);
-        var_dump($rolePermission);
         $permission = [];
         $i=0;
         foreach($rolePermission as $v){

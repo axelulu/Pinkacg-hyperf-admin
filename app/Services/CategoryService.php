@@ -132,7 +132,6 @@ class CategoryService extends Service
     public function category_num_query(): ResponseInterface
     {
         $cat = Category::query()->where('son', 0)->get()->toArray();
-        var_dump($cat);
         foreach ($cat as $k => $v) {
             $num[$k] = Post::query()->where('menu', 'like', '%[' . $v['id'] . ',%')
                 ->orWhere('menu', 'like', '%,' . $v['id'] . ']%')

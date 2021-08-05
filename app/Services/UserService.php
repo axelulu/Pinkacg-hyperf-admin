@@ -52,9 +52,7 @@ class UserService extends Service
         $user = $JWT->getParserData();
         $role_meta = $user['role_meta'];
         $permission = $user['permission'];
-        var_dump($permission);
         $user = User::query()->find($user['id'])->toArray();
-        var_dump($user);
         $permissions = array();
 
         //获取数据
@@ -63,7 +61,6 @@ class UserService extends Service
                 foreach ($permission as $k => $v) {
                     //每一项权限
                     $permission_item = Permission::query()->where('id', $v->value_id)->first()->toArray();
-                    var_dump($permission_item);
                     $method = $permission_item['method'];
                     $methods = [
                         [

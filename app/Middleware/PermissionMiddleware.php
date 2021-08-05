@@ -88,7 +88,6 @@ class PermissionMiddleware implements MiddlewareInterface
         //判断是否拥有普通权限
         if (in_array($method, \Qiniu\json_decode($permission['method']))) {
             $userPermission = PermissionRule::query()->where(['value_id' => $permission['id'], 'type' => 'permission'])->get()->toArray();
-            var_dump($userPermission);
             foreach ($userPermission as $k => $v) {
                 if (PermissionRule::query()->where(['key_id' => $user['id'], 'value_id' => $v['key_id'], 'type' => 'roles'])->get()->count()) {
                     //无权访问的字段

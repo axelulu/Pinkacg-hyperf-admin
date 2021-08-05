@@ -95,7 +95,6 @@ class PermissionService extends Service
     {
         try {
             //存在子菜单
-            var_dump($id);
             if (Permission::query()->where('p_id', $id)->count() > 0) {
                 return $this->fail([], '存在子菜单');
             }

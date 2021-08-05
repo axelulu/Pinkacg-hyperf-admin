@@ -25,7 +25,6 @@ class CategoryResource extends JsonResource
             'updated_at' => str_replace(array('T', 'Z'), ' ', $this->updated_at),
         ];
         $cat_item = Category::query()->where('son', $this->id)->get();
-        var_dump($cat_item);
         if (count($cat_item) > 0) {
             $cat['children'] = CategoryResource::collection($cat_item);
         }
